@@ -465,7 +465,7 @@
       <p class="explainer-title">So funktioniert das Orakel</p>
       <p><strong>Deine aktuelle Lage:</strong> Du erhältst ein Symbol aus sechs Linien, ein sogenanntes Hexagramm, welches deine jetzige Lage beschreibt.</p>
       <p><strong>Die Veränderung:</strong> Ein zweites Hexagramm, welches dir eine Richtung vorgibt.</p>
-      <p><strong>Der traditionelle Impuls:</strong> Hinter dem Klick steckt keine einfache Zufallszahl, sondern ein digitales Verfahren, das einem jahrtausendealten Ritual nachempfunden ist. Der Zufall folgt dabei dem natürlichen Rhythmus deiner eigenen Intuition.</p>
+      <p><strong>Der traditionelle Impuls:</strong> Das Orakel rechnet exakt das jahrtausendealte Schafgarben-Stäbchen-Verfahren nach — nicht die verbreitete, vereinfachte Münzwurf-Abkürzung.</p>
     </div>
 
     <label for="question" class="question-label"><span class="q-red">Frage</span> <span class="q-black">stellen</span></label>
@@ -583,6 +583,52 @@ function lineChar(value) {
 }
 
 function buildHexKey(lines) { return lines.map(l => l.yang ? '1' : '0').join(''); }
+
+let lastShareText = '';
+
+function buildShareText(questionText, origNum, origName, transNum, transName, origData, transData, lines, labels, readingNote) {
+  const parts = [];
+  parts.push('Mein I-Ging-Orakel — Ergebnis aus "Dein Intuitions-Kompass"');
+  if (questionText) parts.push('\nMeine Frage: ' + questionText);
+  parts.push('\nHexagramm ' + origNum + ' · ' + origName);
+  if (transNum) parts.push('Wandelt sich zu Hexagramm ' + transNum + ' · ' + transName);
+  parts.push('\n' + readingNote.replace(/<[^>]+>/g, ''));
+  if (origData) {
+    parts.push('\nUrteil: ' + origData.urteil.lang);
+    parts.push('\nBild: ' + origData.bild.lang);
+    lines.forEach((l, i) => {
+      if (!l.moving) return;
+      const lineData = origData.linien[String(i + 1)];
+      if (!lineData) return;
+      parts.push('\n' + labels[i] + ' — "' + lineData.text + '": ' + lineData.lang);
+    });
+    parts.push('\nZusammenfassung: ' + origData.zusammenfassung);
+  }
+  if (transData) {
+    parts.push('\nZur Wandlung (Hexagramm ' + transNum + '): ' + transData.urteil.lang);
+  }
+  parts.push('\n---\nBitte deute mir dieses I-Ging-Ergebnis in verständlicher, moderner Alltagssprache, bezogen auf meine Frage.');
+  return parts.join('\n');
+}
+
+async function shareReading() {
+  const hint = document.getElementById('shareHint');
+  if (!lastShareText) return;
+  if (navigator.share) {
+    try {
+      await navigator.share({ text: lastShareText });
+      return;
+    } catch (e) {
+      if (e && e.name === 'AbortError') return;
+    }
+  }
+  try {
+    await navigator.clipboard.writeText(lastShareText);
+    if (hint) { hint.textContent = 'In die Zwischenablage kopiert — jetzt in deine KI-App einfügen.'; }
+  } catch (e) {
+    if (hint) { hint.textContent = 'Kopieren nicht möglich — bitte Text manuell markieren.'; }
+  }
+}
 
 function escapeHtml(str) {
   const div = document.createElement('div');
@@ -731,6 +777,8 @@ function castOracle() {
       </div>`
     : '';
 
+  lastShareText = buildShareText(questionText, origNum, origName, transNum, transName, origData, transData, lines, labels, readingNote);
+
   document.getElementById('output').innerHTML = `
     ${questionHTML}
     <div class="panel">
@@ -753,10 +801,11 @@ function castOracle() {
     ${deutungHTML}
     <div class="pdf-row">
       <button class="pdf-btn" type="button" onclick="window.print()">Als PDF sichern</button>
-      <span class="pdf-hint">Wird nur lokal auf deinem Gerät gespeichert — nichts wird übertragen.</span>
+      <button class="pdf-btn" type="button" id="shareBtn" onclick="shareReading()">An KI-App senden</button>
+      <span class="pdf-hint" id="shareHint">Öffnet die Teilen-Funktion deines Geräts — wähle dort deine KI-App (z. B. Gemini). Nichts wird von hier aus automatisch übertragen.</span>
     </div>
     <div class="feedback-row">
-      <a class="feedback-link" href="mailto:rietz.info@gmail.com?subject=${encodeURIComponent('Rückmeldung zum Stengelorakel — Hexagramm ' + origNum)}&body=${encodeURIComponent('Hallo Marco,\n\nich habe das Orakel befragt und Hexagramm ' + origNum + ' (' + origName + ') erhalten.\n\nWas mich überrascht hat / was ich dir sagen möchte:\n')}">Nutze eine KI (wie Gemini oder ChatGPT), um deine gezogenen Linien weiter zu vertiefen – oder schreibe mir, wenn du dich austauschen möchtest. →</a>
+      <a class="feedback-link" href="mailto:rietz.info@gmail.com?subject=${encodeURIComponent('Rückmeldung zum Stengelorakel — Hexagramm ' + origNum)}&body=${encodeURIComponent('Hallo Marco,\n\nich habe das Orakel befragt und Hexagramm ' + origNum + ' (' + origName + ') erhalten.\n\nWas mich überrascht hat / was ich dir sagen möchte:\n')}">Schreib mir, wenn du dich über deine Linien austauschen möchtest →</a>
     </div>
   `;
 
