@@ -1,13 +1,13 @@
 {
-  "name": "Hexagramm-Grid — I Ging Orakel",
-  "short_name": "Hexagramm-Grid",
+  "name": "Nova|LI 49 Bit Orakel",
+  "short_name": "49 Bit Orakel",
   "description": "I-Ging-Orakel von Nova|LI — Prototyp mit vollständigem 64-Hexagramm-Raster.",
   "start_url": "./grid.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#ffffff",
-  "theme_color": "#c23b1f",
+  "theme_color": "#ffffff",
   "lang": "de",
   "icons": [
     {

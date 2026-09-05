@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="Hexagramm-Grid — I-Ging-Orakel von Nova|LI.">
-<title>Hexagramm-Grid</title>
+<meta name="description" content="Nova|LI 49 Bit Orakel — I-Ging-Orakel mit vollständigem 64-Hexagramm-Raster.">
+<title>Nova|LI 49 Bit Orakel</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -417,7 +417,7 @@
 <link rel="manifest" href="manifest-grid.json">
 <link rel="apple-touch-icon" href="icons-grid/apple-touch-icon.png">
 <link rel="icon" href="icons-grid/favicon-32.png" sizes="32x32">
-<meta name="theme-color" content="#c23b1f">
+<meta name="theme-color" content="#ffffff">
 </head>
 <body>
 <!-- jsPDF fürs "Als PDF sichern" (06.09.2026) — muss vor dem Haupt-Skript stehen, das es
@@ -494,9 +494,9 @@
       <summary>+ Impressum &amp; Datenschutz</summary>
       <div class="legal-body">
         <p><strong>Angaben gemäß § 5 TMG</strong><br>
-        Marco Rietz<br>
-        Am Mühlenteich 2<br>
-        38822 Halberstadt OT Klein Quenstedt<br>
+        Nova|LI · Marco Rietz<br>
+        Hardenbergstr. 31<br>
+        06456 Stadt Arnstein OT Wiederstedt<br>
         Deutschland</p>
         <p><strong>Kontakt</strong><br>
         Telefon: 01516 7661204<br>
@@ -1069,7 +1069,7 @@
 
     function buildReadingText(){
       var q = questionInputEl3.value.trim();
-      var parts = ['Mein I-Ging-Orakel-Ergebnis — Hexagramm-Grid'];
+      var parts = ['Mein I-Ging-Orakel-Ergebnis — Nova|LI 49 Bit Orakel'];
       if (q) parts.push('\nMeine Frage: ' + q);
       parts.push('\nHexagramm ' + hex1.number + ' · ' + hex1.name);
       if (movingCount > 0 && hex2) parts.push('Wandelt sich zu Hexagramm ' + hex2.number + ' · ' + hex2.name);
@@ -1182,7 +1182,7 @@
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(16);
       doc.setTextColor(20, 18, 16);
-      doc.text('Hexagramm-Grid — Dein Orakel', marginX, y);
+      doc.text('Nova|LI 49 Bit Orakel', marginX, y);
       y += 28;
       if (q) paragraph('Deine Frage: ' + q, { style: 'bold' });
 
