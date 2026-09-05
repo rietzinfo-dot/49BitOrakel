@@ -1467,6 +1467,21 @@
         var tmp = order[oj]; order[oj] = order[pick]; order[pick] = tmp;
       }
       var builtCount = 0;
+      // Listener JETZT SOFORT anhängen, nicht erst im setTimeout (06.09.2026, nötig für den
+      // Tastendruck-Überspringen-Fix unten) — sonst würde ein vorzeitig per Tastendruck
+      // gesetztes "built" schon durchlaufen sein, BEVOR der Listener (der bisher erst im
+      // setTimeout-Callback kam) überhaupt existiert, und builtCount bliebe für diese Zelle
+      // für immer hängen.
+      cells.forEach(function(cell){
+        cell.addEventListener('transitionend', function handler(e){
+          if (e.propertyName !== 'opacity') return;
+          cell.removeEventListener('transitionend', handler);
+          builtCount++;
+          if (builtCount === cells.length) showQuestionInput();
+        });
+      });
+
+      var buildTimeouts = [];
       // Doppeltes requestAnimationFrame (06.09.2026, Bugfix) — ohne Intro-Delay konnte die
       // allererste Zelle (seq 0, setTimeout 0ms) ihre "built"-Klasse VOR dem ersten Repaint
       // setzen. Der Browser fasst das dann mit dem Anfangszustand zusammen, überspringt den
@@ -1477,19 +1492,25 @@
       requestAnimationFrame(function(){
         requestAnimationFrame(function(){
           order.forEach(function(cellIndex, seq){
-            setTimeout(function(){
-              var cell = cells[cellIndex];
-              cell.classList.add('built');
-              cell.addEventListener('transitionend', function handler(e){
-                if (e.propertyName !== 'opacity') return;
-                cell.removeEventListener('transitionend', handler);
-                builtCount++;
-                if (builtCount === cells.length) showQuestionInput();
-              });
-            }, seq * BUILD_STAGGER);
+            buildTimeouts.push(setTimeout(function(){
+              cells[cellIndex].classList.add('built');
+            }, seq * BUILD_STAGGER));
           });
         });
       });
+
+      // Tastendruck überspringt den restlichen Aufbau komplett (06.09.2026, Marcos Wunsch:
+      // nicht immer die volle Animation abwarten müssen) — bricht alle noch ausstehenden
+      // Zeitverzögerungen ab und lässt alle Zellen sofort erscheinen. Da die Listener oben
+      // schon vor dem eigentlichen Aufbau angehängt wurden, feuert transitionend für jede
+      // noch unfertige Zelle ganz normal, sobald ihre Klasse gesetzt wird.
+      function skipGridBuild(){
+        if (builtCount === cells.length) return;
+        buildTimeouts.forEach(function(t){ clearTimeout(t); });
+        cells.forEach(function(cell){ cell.classList.add('built'); });
+        document.removeEventListener('keydown', skipGridBuild);
+      }
+      document.addEventListener('keydown', skipGridBuild);
     }
   })();
 
