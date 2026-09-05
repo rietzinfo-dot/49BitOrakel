@@ -85,7 +85,6 @@
   /* Fettdruck wie die Frage-Headline auf Screen 1 (05.09.2026, Marcos Wunsch) — gleiches
      Gewicht (500), nicht echtes Bold (IBM Plex Mono ist nur in 400/500 geladen). */
   .german-name{display:block;margin-top:.6rem;font-weight:500;}
-  .hexnum .glyph-char{font-size:1rem;margin-right:.4rem;}
 
   /* Ersetzt das frühere Fragefeld (04.–05.09.2026, Marcos neue Idee): keine Texteingabe
      mehr — die Frage wird in Gedanken gestellt, eine Taste/Berührung löst die Kastung aus.
@@ -415,6 +414,10 @@
   }
   .skip:focus{top:1rem;}
 </style>
+<link rel="manifest" href="manifest-grid.json">
+<link rel="apple-touch-icon" href="icons-grid/apple-touch-icon.png">
+<link rel="icon" href="icons-grid/favicon-32.png" sizes="32x32">
+<meta name="theme-color" content="#c23b1f">
 </head>
 <body>
 <!-- jsPDF fürs "Als PDF sichern" (06.09.2026) — muss vor dem Haupt-Skript stehen, das es
@@ -896,7 +899,18 @@
         // Die Antwort-Zelle(n) verschwinden erst jetzt, im selben Moment, in dem der Scroll
         // zu Screen 2 losläuft — der Rest bleibt als Schatten-Grid für immer sichtbar.
         keptCells.forEach(function(cell){ cell.classList.add('gone'); });
-        startReading.start();
+        // Erst wenn die Webfont wirklich geladen ist starten (07.09.2026, Marcos Fund:
+        // Bezeichnungs-Text überlappte auf seinem Handy die Hexagramm-Linien) — build()
+        // misst die Textbreite/-höhe für die absolute Positionierung sofort per JS; lief das
+        // VOR dem Font-Swap, rechnete es mit den (schmaleren) Metriken der Systemschrift und
+        // die Position stimmte danach dauerhaft nicht mehr. In der Praxis ist die Schrift zu
+        // diesem Zeitpunkt (Zerfalls-Animation ist ja schon gelaufen) fast immer längst da,
+        // document.fonts.ready löst dann sofort auf — kein spürbarer Zeitverlust.
+        if (document.fonts && document.fonts.ready){
+          document.fonts.ready.then(function(){ startReading.start(); });
+        } else {
+          startReading.start();
+        }
       }, DECAY_SPREAD + DECAY_FADE + HOLD_TIME);
     }
 
@@ -1602,8 +1616,11 @@
       var nameParts = hex1.name.split(' / ');
       var chineseName = nameParts[0] || hex1.name;
       var germanName = nameParts[1] || '';
+      // Kein Yijing-Unicode-Glyph mehr davor (07.09.2026, Marcos Fund) — der Zeichenblock
+      // U+4DC0ff. fehlt in vielen Android-Systemfonts und zeigte statt des Hexagramm-
+      // Symbols ein Ersatz-Icon.
       label1.querySelector('.hexnum').innerHTML =
-        '<span class="glyph-char">' + hex1.char + '</span>' + hex1.number + ' · ' + chineseName +
+        hex1.number + ' · ' + chineseName +
         (germanName ? '<span class="german-name">' + formatGermanName(germanName) + '</span>' : '');
       var h1Height = label1.getBoundingClientRect().height || 16;
 
@@ -1691,7 +1708,12 @@
         d.addEventListener('toggle', function(){ syncToggleLabel(d); positionTail(); });
       });
 
-      noteText = buildExplanationHTML();
+      // buildExplanationHTML()-Aufruf hier entfernt (07.09.2026, Performance-Fund gegen
+      // Marcos "App hängt öfters beim Laden" auf dem Handy) — das Ergebnis (noteText) wird
+      // nur von screen3Pile/openScreen3() gebraucht, und die werden aktuell nicht aufgerufen
+      // (bewusst pausiert, siehe openScreen3()-Kommentar unten). Bis dahin unnötige Arbeit
+      // bei jedem Wurf: mehrere ORAKEL_DATEN-Lookups + HTML-String-Aufbau, komplett ungenutzt.
+      // Sobald Screen 3 reaktiviert wird, hier wieder `noteText = buildExplanationHTML();`.
 
       canvas.width = W * DPR; canvas.height = H * DPR;
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
@@ -1843,7 +1865,7 @@
       var chineseName2 = nameParts2[0] || hex2.name;
       var germanName2 = nameParts2[1] || '';
       label2.querySelector('.hexnum').innerHTML =
-        '<span class="glyph-char">' + hex2.char + '</span>' + hex2.number + ' · ' + chineseName2 +
+        hex2.number + ' · ' + chineseName2 +
         (germanName2 ? '<span class="german-name">' + formatGermanName(germanName2) + '</span>' : '');
       var h2Height = label2.getBoundingClientRect().height || 16;
 
@@ -1996,7 +2018,12 @@
         stepStalks(ctx2, stalks2, lineNumbers2, elapsed2, dt);
       }
 
-      requestAnimationFrame(draw);
+      // Schleife anhalten, sobald wirklich alles fertig ist (07.09.2026, Performance-Fund
+      // gegen Marcos "App hängt öfters" auf dem Handy) — bis jetzt lief requestAnimationFrame
+      // für immer weiter und zeichnete beide Canvases 60x/Sekunde neu, obwohl seit Erscheinen
+      // des Footers optisch nichts mehr passiert. Das kostet auf Dauer spürbar Akku/CPU und
+      // kann auf schwächeren Handys zu genau der Trägheit führen, die er beschreibt.
+      if (!footerShown) requestAnimationFrame(draw);
     }
 
     // Kastung jetzt von start() abgetrennt (05.09.2026): der Grid-Screen muss VOR dem
@@ -2021,18 +2048,16 @@
           ? { yang: HEX_PATTERNS[23], moving: [false, false, false, false, false, false] }
           : castHexagram();
       var data1 = lookupHexagram(cast.yang);
-      hex1 = { yang: cast.yang, moving: cast.moving, number: data1[0], name: data1[1],
-        char: String.fromCodePoint(0x4DC0 + data1[0] - 1) };
+      hex1 = { yang: cast.yang, moving: cast.moving, number: data1[0], name: data1[1] };
       movingCount = cast.moving.filter(function(m){ return m; }).length;
 
       if (movingCount > 0){
         if (isTest23m){
-          hex2 = { yang: hex1.yang, number: hex1.number, name: hex1.name, char: hex1.char };
+          hex2 = { yang: hex1.yang, number: hex1.number, name: hex1.name };
         } else {
           var transformedYang = cast.yang.map(function(y, i){ return cast.moving[i] ? !y : y; });
           var data2 = lookupHexagram(transformedYang);
-          hex2 = { yang: transformedYang, number: data2[0], name: data2[1],
-            char: String.fromCodePoint(0x4DC0 + data2[0] - 1) };
+          hex2 = { yang: transformedYang, number: data2[0], name: data2[1] };
         }
       }
       return { hex1: hex1, hex2: hex2, movingCount: movingCount };
