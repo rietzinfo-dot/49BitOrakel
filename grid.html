@@ -1499,18 +1499,24 @@
         });
       });
 
-      // Tastendruck überspringt den restlichen Aufbau komplett (06.09.2026, Marcos Wunsch:
-      // nicht immer die volle Animation abwarten müssen) — bricht alle noch ausstehenden
-      // Zeitverzögerungen ab und lässt alle Zellen sofort erscheinen. Da die Listener oben
-      // schon vor dem eigentlichen Aufbau angehängt wurden, feuert transitionend für jede
-      // noch unfertige Zelle ganz normal, sobald ihre Klasse gesetzt wird.
+      // Tastendruck, Bildschirmberührung ODER Mausklick überspringt den restlichen Aufbau
+      // komplett (06.09.2026, Marcos Wunsch: nicht immer die volle Animation abwarten müssen;
+      // touchstart und mousedown am selben Tag nachgereicht, da Tastendruck auf dem Smartphone
+      // nicht greift) — bricht alle noch ausstehenden Zeitverzögerungen ab und lässt alle Zellen
+      // sofort erscheinen. Da die Listener oben schon vor dem eigentlichen Aufbau angehängt
+      // wurden, feuert transitionend für jede noch unfertige Zelle ganz normal, sobald ihre
+      // Klasse gesetzt wird.
       function skipGridBuild(){
         if (builtCount === cells.length) return;
         buildTimeouts.forEach(function(t){ clearTimeout(t); });
         cells.forEach(function(cell){ cell.classList.add('built'); });
         document.removeEventListener('keydown', skipGridBuild);
+        document.removeEventListener('touchstart', skipGridBuild);
+        document.removeEventListener('mousedown', skipGridBuild);
       }
       document.addEventListener('keydown', skipGridBuild);
+      document.addEventListener('touchstart', skipGridBuild);
+      document.addEventListener('mousedown', skipGridBuild);
     }
   })();
 
