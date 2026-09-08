@@ -74,13 +74,26 @@
   .stage{position:relative;width:min(92vw,640px);height:100%;}
   canvas{width:100%;height:100%;display:block;touch-action:none;cursor:crosshair;}
 
+  /* Antwort-Hexagramme: kein Canvas/Fall-Animation mehr (07.09.2026, Marcos Entscheidung
+     nach wiederholten iPhone-Bugs — siehe answer-hex-display weiter unten) — reiner
+     Textfluss statt JS-berechneter position:absolute-Werte. Das eliminiert die ganze
+     Klasse von Resize-Bugs (iOS blendet beim Scrollen die Adressleiste ein/aus, was
+     bisher build() mitten in der Animation neu ausgelöst und den Zustand zerstört hat). */
+  .reading-col{width:min(74vw,380px);margin:0 auto;}
+  .answer-hex-block{text-align:center;}
+  .answer-hex-display{width:100%;margin-top:1.4rem;}
+  .answer-hex-display .mini-hex{width:100%;gap:16px;}
+  .answer-hex-display .mini-line-row{gap:.7rem;}
+  .answer-hex-display .mini-num{font-size:.85rem;width:1.6em;}
+  .answer-hex-display .mini-line{flex:1;width:auto;}
+  .answer-hex-display .mini-bar{height:12px;}
+
   .label{
-    position:absolute;left:50%;top:19%;max-width:78%;
-    transform:translate(-50%,calc(-100% - 8px));
-    opacity:0;transition:opacity .9s ease, transform .9s ease;
+    max-width:100%;
+    opacity:0;transition:opacity .6s ease;
     text-align:center;
   }
-  .label.show{opacity:1;transform:translate(-50%,-100%);}
+  .label.show{opacity:1;}
   .hexnum{font-size:.89rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);margin:0;}
   /* Fettdruck wie die Frage-Headline auf Screen 1 (05.09.2026, Marcos Wunsch) — gleiches
      Gewicht (500), nicht echtes Bold (IBM Plex Mono ist nur in 400/500 geladen). */
@@ -154,23 +167,18 @@
     min-height:100vh;
     opacity:0;
     transition:opacity 1.2s ease;
+    padding-top:15vh;
+    padding-bottom:10vh;
   }
   .answer-zone.show{opacity:1;}
-  /* Auf dieselbe Breite begrenzt wie .hex-grid (min(74vw,380px)) — die Antwort-Hexagramme
-     sollen nicht breiter werden als die Box mit den 64 Gesamthexagrammen darüber. Höhe
-     jetzt genau ein Drittel des Screens (oberes Drittel), nicht mehr die volle Zone. */
-  .stage-reading{
-    position:absolute;top:0;left:50%;transform:translateX(-50%);
-    width:min(74vw,380px);height:33.333vh;
-  }
 
   /* Urteil- und Bild-Zitat unter dem Hexagramm — nur die Original-Zitate, ohne
-     "Urteil"/"Bild" als Überschrift (Marcos Versuch, 04.09.2026), erscheinen parallel
-     zum Linienaufbau statt erst danach. */
+     "Urteil"/"Bild" als Überschrift (Marcos Versuch, 04.09.2026). Seit 07.09.2026 (keine
+     Canvas-Fall-Animation mehr, siehe reading-col oben) reiner Textfluss mit festem
+     Randabstand statt JS-berechneter top-Werte. */
   .quote-text{
-    position:absolute;top:calc(33.333vh + 1.6rem);left:50%;transform:translateX(-50%);
-    width:min(74vw,380px);
-    opacity:0;transition:opacity 1.4s ease;
+    margin-top:5rem;
+    opacity:0;transition:opacity .6s ease;
   }
   .quote-text.show{opacity:1;}
   .quote-p{
@@ -185,31 +193,32 @@
     color:var(--ink-soft);
   }
   .floating-heading{
-    position:absolute;left:50%;transform:translateX(-50%);
-    width:min(74vw,380px);
-    opacity:0;transition:opacity 1.3s ease;
+    opacity:0;transition:opacity .6s ease;
   }
   .floating-heading.show{opacity:1;}
+  #hexExplanationHeading, #hexExplanationHeading2{margin-top:2.75rem;}
+  #movingLinesHeading, #situationHeading{margin-top:5rem;}
+  #readingActions{margin-top:3.75rem;}
 
   /* Quellenangabe rechtsbündig nach den Zitaten, danach die aus Wilhelm (Erstes + Drittes
      Buch) und Cannone synthetisierte Erklärung — Test zunächst nur für Hexagramm 23
-     (Marcos Wunsch 04.09.2026, weitere erst nach Freigabe). Beide blenden erst ein,
-     wenn die Zitate fertig getippt sind, statt gleichzeitig mit ihnen. */
+     (Marcos Wunsch 04.09.2026, weitere erst nach Freigabe). */
   .source-cite{
-    position:absolute;left:50%;transform:translateX(-50%);
-    width:min(74vw,380px);
-    margin:.4rem 0 0;font-size:.72rem;font-style:italic;color:var(--ink-soft);
+    margin-top:.5rem;font-size:.72rem;font-style:italic;color:var(--ink-soft);
     text-align:right;
-    opacity:0;transition:opacity .9s ease;
+    opacity:0;transition:opacity .6s ease;
   }
   .source-cite.show{opacity:1;}
   .hex-explanation{
-    position:absolute;left:50%;transform:translateX(-50%);
-    width:min(74vw,380px);
+    margin-top:.5rem;
     font-size:.85rem;line-height:1.65;color:var(--ink-soft);
     text-align:justify;hyphens:auto;-webkit-hyphens:auto;
-    opacity:0;transition:opacity 1.3s ease;
+    opacity:0;transition:opacity .6s ease;
   }
+  /* movingLinesBox trägt ebenfalls die Klasse .hex-explanation (Aufklappbox-Optik), braucht
+     aber einen größeren Abstand zur vorherigen Überschrift als die übrigen .hex-explanation-
+     Blöcke — ID-Regel gewinnt gezielt gegen die Klassen-Regel oben. */
+  #movingLinesBox{margin-top:1.75rem;}
   /* Mehrere <p> innerhalb eines .hex-explanation-Blocks (z. B. je wandelnder Linie einer,
      05.09.2026) — Abstand dazwischen wie bei .quote-p. */
   .hex-explanation p{margin:0 0 1.1rem;}
@@ -251,11 +260,10 @@
      Trennlinie. Nutzt dieselbe Aufklapp-Mechanik (.expand-detail/syncToggleLabel) wie die
      Linien-Synthesen, nur mit eigenem, gleichbleibendem Label statt "Ausführlicher lesen". */
   .oracle-footer{
-    position:absolute;left:50%;transform:translateX(-50%);
-    width:min(74vw,380px);
+    margin-top:3.75rem;
     padding-top:1.5rem;
     border-top:1px solid var(--ink-soft);
-    opacity:0;transition:opacity 1.3s ease;
+    opacity:0;transition:opacity .6s ease;
   }
   .oracle-footer.show{opacity:1;}
   .oracle-footer .eyebrow{
@@ -308,28 +316,6 @@
      "Als PDF sichern" öffnet stattdessen ein eigenständiges Blob-Dokument in neuem Tab, das
      seine Print-Styles selbst mitbringt (siehe openPrintDocument() im Skript). Hier also
      keine eigenen Print-Klassen mehr nötig. */
-
-  /* Dreht sich, solange im Hintergrund etwas passiert (Kastung läuft, Hexagramme bauen
-     sich auf) — signalisiert, dass nichts eingefroren ist. Als SVG (statt Text-Glyphe)
-     gezeichnet, damit die Drehung ein sauberer Kreis ist und nicht durch die Schriftart
-     "eiert". */
-  .hex-spinner{
-    position:absolute;left:50%;bottom:16%;transform:translateX(-50%);
-    opacity:0;pointer-events:none;
-    transition:opacity .5s ease;
-  }
-  .hex-spinner.show{opacity:1;}
-  .hex-spinner .glyph{
-    display:inline-flex;align-items:center;justify-content:center;
-    width:2.3rem;height:2.3rem;
-    animation:hexspin 2.2s linear infinite;
-    transform-origin:50% 50%;
-  }
-  .hex-spinner .glyph svg{display:block;width:100%;height:100%;}
-  @keyframes hexspin{ to { transform:rotate(360deg); } }
-  @media (prefers-reduced-motion:reduce){
-    .hex-spinner .glyph{animation:none;}
-  }
 
   /* Screen 3: eigener Bildschirm — die Streu-Stäbchen fallen hier hinein und ordnen sich
      danach automatisch (zeitgesteuert, kein Wischen mehr nötig) zum Rahmen einer Box statt
@@ -413,6 +399,67 @@
     transition:top .2s ease;z-index:10;
   }
   .skip:focus{top:1rem;}
+
+  /* Tagebuch (07.09.2026, Marcos Wunsch): rein lokale Speicherung per localStorage, ein
+     Eintrag pro beantworteter Frage, komplette Lesung (Zitate+Erklärungen als Snapshot
+     der Anzeige zum Zeitpunkt der Frage) statt bloß Frage+Hexagrammnummer — bleibt so auch
+     lesbar, wenn sich Erklärungstexte im Tool später ändern. Immer erreichbar (fixer Button
+     oben rechts), unabhängig davon, auf welchem Screen man gerade ist. */
+  .diary-open-btn{
+    position:fixed;top:1rem;right:1rem;z-index:20;
+    background:none;border:1px solid var(--ink-soft);border-radius:2px;
+    color:var(--ink-soft);font-family:'IBM Plex Mono',ui-monospace,monospace;
+    font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;
+    padding:.5rem .9rem;cursor:pointer;
+    transition:border-color .3s ease,color .3s ease;
+  }
+  .diary-open-btn:hover, .diary-open-btn:focus{border-color:var(--vermillion);color:var(--vermillion);outline:none;}
+
+  .diary-overlay{
+    position:fixed;inset:0;z-index:30;
+    background:var(--paper);
+    overflow-y:auto;
+    opacity:0;pointer-events:none;
+    transition:opacity .35s ease;
+  }
+  .diary-overlay.show{opacity:1;pointer-events:auto;}
+  .diary-inner{width:min(84vw,520px);margin:0 auto;padding:4rem 0 6rem;}
+  .diary-header{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;margin-bottom:2.2rem;}
+  .diary-title{font-size:1.05rem;font-weight:500;margin:0;}
+  .diary-close-btn{
+    background:none;border:1px solid var(--ink-soft);border-radius:2px;
+    color:var(--ink);font-family:'IBM Plex Mono',ui-monospace,monospace;
+    font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;
+    padding:.5rem 1rem;cursor:pointer;flex-shrink:0;
+    transition:border-color .3s ease,color .3s ease;
+  }
+  .diary-close-btn:hover, .diary-close-btn:focus{border-color:var(--vermillion);color:var(--vermillion);outline:none;}
+  .diary-empty{font-size:.85rem;color:var(--ink-soft);line-height:1.6;}
+  .diary-entry{margin:0 0 1.4rem;padding-bottom:1.4rem;border-bottom:1px solid rgba(20,18,16,.12);}
+  .diary-entry:last-child{border-bottom:none;}
+  .diary-entry > summary{
+    cursor:pointer;list-style:none;
+  }
+  .diary-entry > summary::-webkit-details-marker{display:none;}
+  .diary-entry-date{font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 .3rem;}
+  .diary-entry-question{font-size:.92rem;font-weight:500;margin:0 0 .2rem;}
+  .diary-entry-hex{font-size:.78rem;color:var(--ink-soft);margin:0;}
+  .diary-entry-body{margin-top:1.2rem;}
+  /* Snapshot-Inhalt nutzt dieselben Klassen wie die eigentliche Lesung (.quote-p,
+     .hex-explanation etc.), aber im normalen Textfluss statt position:absolute — daher
+     hier bewusst keine erneuten position/opacity-Regeln nötig, nur etwas Abstand. */
+  .diary-entry-body .quote-heading{margin:0 0 .9rem;font-size:.85rem;}
+  .diary-entry-body .hex-explanation{margin:1.2rem 0 0;opacity:1;font-size:.82rem;}
+  .diary-entry-body .box-hexlabel{margin:1.4rem 0 .6rem;font-size:.7rem;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-soft);}
+  .diary-clear-row{margin-top:2.5rem;padding-top:1.4rem;border-top:1px solid var(--ink-soft);}
+  .diary-clear-btn{
+    background:none;border:1px solid var(--ink-soft);border-radius:2px;
+    color:var(--ink-soft);font-family:'IBM Plex Mono',ui-monospace,monospace;
+    font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;
+    padding:.5rem .9rem;cursor:pointer;
+    transition:border-color .3s ease,color .3s ease;
+  }
+  .diary-clear-btn:hover, .diary-clear-btn:focus{border-color:var(--vermillion);color:var(--vermillion);outline:none;}
 </style>
 <link rel="manifest" href="manifest-grid.json">
 <link rel="apple-touch-icon" href="icons-grid/apple-touch-icon.png">
@@ -420,6 +467,19 @@
 <meta name="theme-color" content="#ffffff">
 </head>
 <body>
+<!-- Tagebuch (07.09.2026) — fixer Button, überall auf der Seite erreichbar, unabhängig
+     vom aktuellen Screen. Öffnet ein Overlay mit allen lokal gespeicherten Lesungen. -->
+<button class="diary-open-btn" id="diaryOpenBtn" type="button">Tagebuch</button>
+<div class="diary-overlay" id="diaryOverlay" role="dialog" aria-label="Dein Tagebuch">
+  <div class="diary-inner">
+    <div class="diary-header">
+      <p class="diary-title">Dein <span class="accent">Tagebuch</span></p>
+      <button class="diary-close-btn" id="diaryCloseBtn" type="button">Schließen</button>
+    </div>
+    <div id="diaryList"></div>
+  </div>
+</div>
+
 <!-- jsPDF fürs "Als PDF sichern" (06.09.2026) — muss vor dem Haupt-Skript stehen, das es
      erst beim Klick auf den Button verwendet (siehe generatePdfBlob()). -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -432,24 +492,30 @@
     <button class="ask-submit" id="askSubmit" type="button">Frage stellen</button>
   </div>
   <div class="hex-grid" id="hexGridBottom"></div>
-  <div class="hex-spinner" id="spinner1"><span class="glyph"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="50" fill="#141210"/><path d="M50,0 A50,50 0 0,1 50,100 A25,25 0 0,1 50,50 A25,25 0 0,0 50,0 Z" fill="#ffffff"/><circle cx="50" cy="25" r="6" fill="#ffffff"/><circle cx="50" cy="75" r="6" fill="#141210"/></svg></span></div>
 </div>
 
+<!-- Antwort-Bereich (07.09.2026, komplett überarbeitet): kein Canvas/Fall-Physik mehr —
+     das Hexagramm erscheint sofort vollständig (renderMiniHex(), wie im Screen-3-Vorbild),
+     Zitate/Erklärungen erscheinen ebenfalls sofort statt per Typewriter/Zeitkette. Grund:
+     die alte Architektur hing an einer laufenden requestAnimationFrame-Zeitkette
+     (triggerTime/elapsed), die durch einen mitten in der Animation ausgelösten resize
+     (auf iPhone: Safari blendet beim Scrollen die Adressleiste ein/aus und feuert dabei
+     ein resize-Event) komplett neu gestartet wurde — Ursache für Marcos gemeldete
+     Überschneidungen und teils fehlende Texte. Reiner Textfluss kennt dieses Problem
+     nicht: ein resize erzwingt hier höchstens ein normales Reflow, keinen Neuaufbau. -->
 <div class="answer-zone" id="answerZone">
-  <div class="stage-reading" id="stageReading">
-    <canvas id="c2" role="img" aria-label="Das Orakel formt die Antwort"></canvas>
+  <div class="reading-col" id="readingCol">
+  <div class="answer-hex-block" id="answerHexBlock1">
     <div class="label" id="label2"><p class="hexnum"></p></div>
-    <div class="label" id="label3"><p class="hexnum"></p></div>
+    <div class="answer-hex-display" id="answerHexDisplay1"></div>
   </div>
-  <div class="hex-spinner" id="spinner2"><span class="glyph"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="50" fill="#141210"/><path d="M50,0 A50,50 0 0,1 50,100 A25,25 0 0,1 50,50 A25,25 0 0,0 50,0 Z" fill="#ffffff"/><circle cx="50" cy="25" r="6" fill="#ffffff"/><circle cx="50" cy="75" r="6" fill="#141210"/></svg></span></div>
   <div class="quote-text" id="quoteText"></div>
   <p class="source-cite" id="sourceCite">— I Ging, „Das Buch der Wandlungen" nach Wilhelm</p>
   <p class="quote-heading floating-heading" id="hexExplanationHeading">Was dir das Zeichen sagt:</p>
   <div class="hex-explanation" id="hexExplanation"></div>
 
   <!-- Übergang zum zweiten Hexagramm — nur sichtbar, wenn es wandelnde Linien gibt
-       (Marcos Vorgabe 04.09.2026). Inhalt vorerst Test/Platzhalter, nur an Hexagramm 23
-       geprüft, bevor die anderen 63 folgen. -->
+       (Marcos Vorgabe 04.09.2026). -->
   <p class="quote-heading floating-heading" id="movingLinesHeading"><span class="accent">Rote</span> Linien bedeuten Veränderung.</p>
   <details class="expand-detail hex-explanation" id="movingLinesBox">
     <summary>+ Ausführlicher lesen</summary>
@@ -457,9 +523,9 @@
   </details>
   <p class="quote-heading floating-heading" id="situationHeading">Daraus ergibt sich folgende Situation:</p>
 
-  <div class="stage-reading" id="stageReading2">
-    <canvas id="c2b" role="img" aria-label="Das Orakel formt das zweite Zeichen"></canvas>
+  <div class="answer-hex-block" id="answerHexBlock2">
     <div class="label" id="label2b"><p class="hexnum"></p></div>
+    <div class="answer-hex-display" id="answerHexDisplay2"></div>
   </div>
   <div class="quote-text" id="quoteText2"></div>
   <p class="source-cite" id="sourceCite2">— I Ging, „Das Buch der Wandlungen" nach Wilhelm</p>
@@ -467,11 +533,11 @@
   <div class="hex-explanation" id="hexExplanation2"></div>
 
   <!-- Direkt unter der letzten Erklärung statt im Footer (06.09.2026, Marcos Korrektur) —
-       eigener schwebender Block wie movingLinesHeading etc., Position hängt davon ab, ob
-       Hexagramm 1 oder 2 die letzte Erklärung ist (siehe positionTail()). -->
+       eigener schwebender Block wie movingLinesHeading etc. -->
   <div class="reading-actions floating-heading" id="readingActions">
     <button class="footer-btn" id="pdfBtn" type="button">Als PDF sichern</button>
     <button class="footer-btn" id="shareBtn" type="button">An KI-App senden</button>
+    <button class="footer-btn" id="newQuestionBtn" type="button">Neue Frage stellen</button>
     <p class="share-hint" id="pdfHint"></p>
     <p class="share-hint" id="shareHint"></p>
   </div>
@@ -504,7 +570,7 @@
         <p><strong>Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV</strong><br>
         Marco Rietz (Anschrift wie oben)</p>
         <p><strong>Datenschutz</strong><br>
-        Diese Seite erhebt, speichert oder verarbeitet keine personenbezogenen Daten auf einem Server. Die eingegebene Frage wird ausschließlich lokal im Browser verwendet und nirgends übertragen oder gespeichert. Es werden keine Cookies gesetzt und keine Tracking-Dienste eingebunden.</p>
+        Diese Seite erhebt, speichert oder verarbeitet keine personenbezogenen Daten auf einem Server. Die eingegebene Frage und die Deutung werden zusätzlich als Tagebuch-Eintrag lokal in deinem Browser gespeichert (localStorage) — ausschließlich auf deinem eigenen Gerät, nie an uns oder einen Server übertragen. Du findest diese Einträge über den Button „Tagebuch" oben rechts und kannst sie dort jederzeit vollständig löschen. Es werden keine Cookies gesetzt und keine Tracking-Dienste eingebunden.</p>
         <p><strong>Haftungsausschluss</strong><br>
         Die Inhalte dieser Seite dienen der persönlichen Reflexion und dem Studium des I Ging und erheben keinen Anspruch auf Vollständigkeit oder Richtigkeit. Sie stellen keine Beratung jeglicher Art dar.</p>
       </div>
@@ -519,6 +585,7 @@
         <p>Danach startet das Orakel wie eine normale App vom Startbildschirm — ganz ohne App Store, und funktioniert auch offline.</p>
       </div>
     </details>
+  </div>
   </div>
 </div>
 
@@ -1322,7 +1389,7 @@
   // Zellen bis auf das/die Antwort-Hexagramm(e) (per Gitter-Index === Hexagrammnummer
   // identisch, da das Grid in genau dieser Reihenfolge 1–64 aufgebaut wird). Danach hält
   // das Bild kurz, bevor wie bisher langsam zu Screen 2 gescrollt wird. ----------
-  (function gridScreen(){
+  var gridScreenApi = (function gridScreen(){
     var gridScreenEl = document.getElementById('gridScreen');
     var hexGridTop = document.getElementById('hexGridTop');
     var hexGridBottom = document.getElementById('hexGridBottom');
@@ -1518,38 +1585,50 @@
       document.addEventListener('touchstart', skipGridBuild);
       document.addEventListener('mousedown', skipGridBuild);
     }
+
+    // "Neue Frage stellen" (07.09.2026, Marcos Wunsch: mehrere Fragen ohne Reload) — setzt
+    // das Grid auf den Zustand direkt vor der ersten Kastung zurück (alle 64 Zellen wieder
+    // voll sichtbar, kein erneuter gestaffelter Aufbau nötig — Marco wollte es "sofort
+    // bereit" statt die Animation nochmal zu zeigen) und sperrt das Scrollen wieder, bis
+    // die nächste Frage bestätigt wird.
+    function resetGridScreen(){
+      triggered = false;
+      cells.forEach(function(cell){ cell.classList.remove('decayed', 'kept', 'gone'); });
+      gridScreenEl.classList.remove('casting');
+      questionInput.value = '';
+      document.documentElement.style.overflow = 'hidden';
+      document.body.style.overflow = 'hidden';
+    }
+
+    return { reset: resetGridScreen };
   })();
 
   // ---------- Antwort-Hexagramm: fällt automatisch in Position und bleibt danach bestehen ----------
   var startReading = (function readingPile(){
-    var canvas = document.getElementById('c2');
-    var ctx = canvas.getContext('2d');
-    var stageEl = document.getElementById('stageReading');
     var answerZone = document.getElementById('answerZone');
     var gridScreenEl = document.getElementById('gridScreen');
     var screen3El = document.getElementById('screen3');
     var label1 = document.getElementById('label2');
+    var answerHexDisplay1 = document.getElementById('answerHexDisplay1');
     var quoteTextEl = document.getElementById('quoteText');
     var sourceCiteEl = document.getElementById('sourceCite');
     var hexExplanationHeadingEl = document.getElementById('hexExplanationHeading');
     var hexExplanationEl = document.getElementById('hexExplanation');
-    var explanationRevealed = { done: false };
 
     // Zweites Hexagramm (Übergang bei wandelnden Linien, Marcos Vorgabe 04.09.2026) —
-    // eigener Canvas/Label/Zitat-Block, baut sich exakt wie das erste Hexagramm auf,
-    // nur zeitlich versetzt danach.
-    var canvas2 = document.getElementById('c2b');
-    var ctx2 = canvas2.getContext('2d');
-    var stage2El = document.getElementById('stageReading2');
+    // eigener Block, erscheint (seit 07.09.2026) gleichzeitig mit allem anderen, keine
+    // eigene Zeitkette mehr nötig.
     var label2 = document.getElementById('label2b');
+    var answerHexBlock2 = document.getElementById('answerHexBlock2');
+    var answerHexDisplay2 = document.getElementById('answerHexDisplay2');
     var movingHeadingEl = document.getElementById('movingLinesHeading');
     var movingLinesBoxEl = document.getElementById('movingLinesBox');
     var movingLinesBoxContentEl = document.getElementById('movingLinesBoxContent');
     var situationHeadingEl = document.getElementById('situationHeading');
-    // Jedes <details> löst bei Auf-/Zuklappen eine Neuberechnung der nachfolgenden
-    // Positionen aus (05.09.2026, Marcos Fund: Folgetexte überschnitten sich bisher mit
-    // den aufgeklappten ausführlichen Varianten, weil alle Positionen nur einmal beim
-    // Aufbau in px berechnet werden und sich nie von selbst neu einordnen).
+    // Jedes <details> löst bei Auf-/Zuklappen syncToggleLabel() aus, um den Reiter-Text
+    // ("+ Ausführlicher lesen"/"– Weniger") zu aktualisieren — eine Neupositionierung wie
+    // früher (positionTail()) ist im reinen Textfluss nicht mehr nötig, alles danach
+    // rutscht automatisch mit.
     movingLinesBoxEl.addEventListener('toggle', function(){
       syncToggleLabel(movingLinesBoxEl);
       // Beim Zuklappen der äußeren Box auch alle verschachtelten Linien-Aufklappboxen
@@ -1562,29 +1641,19 @@
           syncToggleLabel(d);
         });
       }
-      positionTail();
     });
-    var hex2BlockBottom = 0;
-    var hex2Built = false;
     var quoteTextEl2 = document.getElementById('quoteText2');
     var sourceCiteEl2 = document.getElementById('sourceCite2');
     var hexExplanationHeadingEl2 = document.getElementById('hexExplanationHeading2');
     var hexExplanationEl2 = document.getElementById('hexExplanation2');
-    var explanationRevealed2 = { done: false };
     var oracleFooterEl = document.getElementById('oracleFooter');
     var readingActionsEl = document.getElementById('readingActions');
     var legalDetailEl = document.getElementById('legalDetail');
     var installDetailEl = document.getElementById('installDetail');
-    var footerShown = false;
+    var newQuestionBtnEl = document.getElementById('newQuestionBtn');
     [legalDetailEl, installDetailEl].forEach(function(d){
-      d.addEventListener('toggle', function(){ syncToggleLabel(d); positionTail(); });
+      d.addEventListener('toggle', function(){ syncToggleLabel(d); });
     });
-    function revealFooter(){
-      if (footerShown) return;
-      footerShown = true;
-      readingActionsEl.classList.add('show');
-      oracleFooterEl.classList.add('show');
-    }
 
     // PDF sichern / An KI-App senden / Kontakt (05.09.2026, Marcos Wunsch) — alle drei
     // greifen auf hex1/hex2/movingCount zu, die zu diesem Zeitpunkt (Footer ist ja erst
@@ -1597,6 +1666,108 @@
     var contactBtnEl = document.getElementById('contactBtn');
     // questionInput gehört zum gridScreen()-Scope (eigene IIFE) — hier per ID neu greifen.
     var questionInputEl3 = document.getElementById('questionInput');
+
+    // ---------- Tagebuch (07.09.2026, Marcos Wunsch) ----------
+    // Rein lokale Speicherung per localStorage — ein Eintrag pro beantworteter Frage, als
+    // Snapshot der tatsächlich angezeigten Zitate/Erklärungen (nicht bloß Hexagrammnummern),
+    // damit ein Eintrag auch dann noch genauso lesbar bleibt, wenn sich die Erklärungstexte
+    // im Tool später ändern. Kein Server, kein Abgleich zwischen Geräten — genau wie die
+    // eingegebene Frage bleibt auch das Tagebuch strikt auf diesem Gerät/Browser (siehe
+    // ergänzter Datenschutz-Hinweis im Footer).
+    var DIARY_KEY = 'novali49bitDiary';
+    var diaryOpenBtnEl = document.getElementById('diaryOpenBtn');
+    var diaryCloseBtnEl = document.getElementById('diaryCloseBtn');
+    var diaryOverlayEl = document.getElementById('diaryOverlay');
+    var diaryListEl = document.getElementById('diaryList');
+
+    function loadDiary(){
+      try {
+        var raw = localStorage.getItem(DIARY_KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch (e){ return []; }
+    }
+
+    function saveDiaryEntry(entry){
+      try {
+        var list = loadDiary();
+        list.unshift(entry);
+        localStorage.setItem(DIARY_KEY, JSON.stringify(list));
+      } catch (e){
+        // z. B. Privatmodus ohne Storage-Zugriff oder Kontingent voll — die Lesung selbst
+        // funktioniert trotzdem weiter, nur eben ohne Tagebuch-Eintrag.
+      }
+    }
+
+    function formatDiaryDate(iso){
+      var d = new Date(iso);
+      if (isNaN(d.getTime())) return '';
+      return d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' }) +
+        ' · ' + d.toLocaleTimeString('de-DE', { hour:'2-digit', minute:'2-digit' });
+    }
+
+    // Snapshot-HTML nutzt dieselben Klassen wie die eigentliche Lesung (.quote-text,
+    // .hex-explanation), aber erzwungen sichtbar (opacity:1 inline) — im Tagebuch gibt es
+    // keine Reveal-Animation, alles soll sofort lesbar sein.
+    function renderDiaryEntryBody(entry){
+      var html = '<div class="quote-text" style="opacity:1;">' + entry.quoteHTML1 + '</div>' +
+        '<p class="source-cite" style="opacity:1;position:static;text-align:left;margin-top:.4rem;">— I Ging, „Das Buch der Wandlungen" nach Wilhelm</p>' +
+        '<div class="hex-explanation" style="opacity:1;">' + entry.explanationHTML1 + '</div>';
+      if (entry.hex2){
+        html += '<p class="box-hexlabel">↓ Wandelt sich zu Hexagramm ' + entry.hex2.number + ' · ' + escapeHtmlB3(entry.hex2.name) + '</p>';
+        if (entry.movingHTML){
+          html += '<div class="hex-explanation" style="opacity:1;">' + entry.movingHTML + '</div>';
+        }
+        html += '<div class="quote-text" style="opacity:1;">' + entry.quoteHTML2 + '</div>' +
+          '<p class="source-cite" style="opacity:1;position:static;text-align:left;margin-top:.4rem;">— I Ging, „Das Buch der Wandlungen" nach Wilhelm</p>' +
+          '<div class="hex-explanation" style="opacity:1;">' + entry.explanationHTML2 + '</div>';
+      }
+      return html;
+    }
+
+    function renderDiaryList(){
+      var list = loadDiary();
+      if (!list.length){
+        diaryListEl.innerHTML = '<p class="diary-empty">Noch keine Einträge — deine erste Frage erscheint hier, sobald du sie beantwortet hast.</p>';
+        return;
+      }
+      var html = list.map(function(entry, i){
+        var q = entry.question ? escapeHtmlB3(entry.question) : '(keine Frage eingegeben)';
+        return '<details class="diary-entry">' +
+          '<summary>' +
+            '<p class="diary-entry-date">' + formatDiaryDate(entry.date) + '</p>' +
+            '<p class="diary-entry-question">' + q + '</p>' +
+            '<p class="diary-entry-hex">Hexagramm ' + entry.hex1.number + ' · ' + escapeHtmlB3(entry.hex1.name) + (entry.hex2 ? ' → ' + entry.hex2.number : '') + '</p>' +
+          '</summary>' +
+          '<div class="diary-entry-body">' + renderDiaryEntryBody(entry) + '</div>' +
+        '</details>';
+      }).join('');
+      html += '<div class="diary-clear-row"><button class="diary-clear-btn" id="diaryClearBtn" type="button">Tagebuch löschen</button></div>';
+      diaryListEl.innerHTML = html;
+      diaryListEl.querySelectorAll('.expand-detail').forEach(function(d){
+        d.addEventListener('toggle', function(){ syncToggleLabel(d); });
+      });
+      var clearBtn = document.getElementById('diaryClearBtn');
+      if (clearBtn){
+        clearBtn.addEventListener('click', function(){
+          if (!confirm('Wirklich alle gespeicherten Tagebuch-Einträge unwiderruflich löschen?')) return;
+          try { localStorage.removeItem(DIARY_KEY); } catch (e){}
+          renderDiaryList();
+        });
+      }
+    }
+
+    diaryOpenBtnEl.addEventListener('click', function(){
+      renderDiaryList();
+      diaryOverlayEl.classList.add('show');
+    });
+    diaryCloseBtnEl.addEventListener('click', function(){
+      diaryOverlayEl.classList.remove('show');
+    });
+    document.addEventListener('keydown', function(e){
+      if (e.key === 'Escape' && diaryOverlayEl.classList.contains('show')){
+        diaryOverlayEl.classList.remove('show');
+      }
+    });
 
     function buildReadingText(){
       var q = questionInputEl3.value.trim();
@@ -1836,141 +2007,9 @@
       window.location.href = 'mailto:rietz.info@gmail.com?subject=' + encodeURIComponent(subject) +
         '&body=' + encodeURIComponent(bodyParts.join('\n'));
     });
-    var quoteFullText1b = '', quoteFullText2b = '';
-    var quoteP1ElB = null, quoteP2ElB = null;
-    var triggerTime2 = null;
-    var movingSectionShown = false, stage2Started = false;
-    var isFirstBuild = true;
-    var W2, H2;
-    var stalks2 = [];
-    var lineNumbers2 = [];
-
-    var DPR = Math.min(window.devicePixelRatio || 1, 2);
-    var W, H;
-    var stalks = [];
-    var lineNumbers = [];
-    // Typewriter-Aufbau des Zitat-Texts, synchron zum Hexagramm-Aufbau (Marcos Wunsch
-    // 04.09.2026: Text und Hexagramm sollen gleichzeitig fertig werden).
-    var quoteFullText1 = '', quoteFullText2 = '';
-    var quoteP1El = null, quoteP2El = null;
-    var TEXT_TYPE_DURATION = 2400;
-    var started = false, triggerTime = null, lastTs = null;
+    var started = false;
     var hex1, hex2, movingCount;
     var screen3Started = false;
-
-    // Linien-Stäbchen: fallen unten-zuerst von oben in ihre Zielposition und BLEIBEN dort —
-    // keine zufällige Startposition auf der X-Achse, damit die Linien immer bündig abschließen.
-    var LINE_GRAVITY = 700; // langsamer als die Boden-Fälle, damit man das Aufbauen wirklich sieht
-
-    function makeLineStalk(tx, ty, tw, th, color, delay){
-      var dropH = 70 + Math.random() * 110;
-      return {
-        isChaff: false,
-        x: tx, y: ty - dropH, startY: ty - dropH,
-        tx: tx, ty: ty, tw: tw, th: th,
-        sw: 12 + Math.random() * 10, sh: 3,
-        w: 12 + Math.random() * 10, h: 3,
-        startAng: shortestAngle(Math.random() * Math.PI * 2),
-        ang: 0, vy: 0, vAng: 0, bounces: 0,
-        op: 1, color: color,
-        delay: delay,
-        phase: 'wait' // wait -> fallIn -> landed (bleibt für immer)
-      };
-    }
-
-    // centerX jetzt als Parameter statt geteiltem äußerem "cx" — wird für die
-    // Nebeneinander-Anordnung gebraucht, wo Hexagramm 1 und 2 unterschiedliche
-    // X-Mittelpunkte haben (siehe build()).
-    // numbersOut sammelt die Liniennummerierung (1 unten bis 6 oben) parallel zu den
-    // Stäbchen — erscheint mit derselben Verzögerung wie die jeweilige Linie.
-    function layoutHexagram(lineYang, lineMoving, centerY, pitch, lineH, barW, centerX, delayBase, stalksOut, numbersOut){
-      for (var li = 0; li < 6; li++){
-        var rowY = centerY + (2.5 - li) * pitch;
-        var color = (lineMoving && lineMoving[li]) ? '#c23b1f' : '#141210';
-        var delay = delayBase + li * 260 + Math.random() * 140; // unten zuerst — echte Kastungs-Reihenfolge
-        if (lineYang[li]){
-          stalksOut.push(makeLineStalk(centerX, rowY, barW, lineH, color, delay));
-        } else {
-          var gap = barW * 0.16, segW = (barW - gap) / 2;
-          stalksOut.push(makeLineStalk(centerX - gap/2 - segW/2, rowY, segW, lineH, color, delay));
-          stalksOut.push(makeLineStalk(centerX + gap/2 + segW/2, rowY, segW, lineH, color, delay));
-        }
-        if (numbersOut){
-          numbersOut.push({
-            x: centerX - barW / 2 - pitch * 0.55, y: rowY,
-            num: li + 1, color: color, delay: delay, size: Math.max(10, pitch * 0.5)
-          });
-        }
-      }
-    }
-
-    // Physik-Schritt für ein Stäbchen-Set (Linien + Nummerierung), unabhängig vom
-    // Canvas — so kann dieselbe Aufbau-Optik für Hexagramm 1 UND Hexagramm 2 verwendet
-    // werden (Marcos Vorgabe 04.09.2026: zweites Zeichen exakt gleich gebaut wie erstes).
-    function stepStalks(ctxX, stalksArr, lineNumbersArr, elapsed, dt){
-      var allLanded = true;
-      for (var i = 0; i < stalksArr.length; i++){
-        var s = stalksArr[i];
-        if (s.phase === 'wait'){
-          if (elapsed >= s.delay) s.phase = 'fallIn';
-          allLanded = false;
-        } else if (s.phase === 'fallIn'){
-          s.vy += LINE_GRAVITY * dt;
-          s.y += s.vy * dt;
-          var progress = clamp01((s.y - s.startY) / (s.ty - s.startY));
-          var ease = smoothstep(progress);
-          s.w = lerp(s.sw, s.tw, ease);
-          s.h = lerp(s.sh, s.th, ease);
-          s.ang = lerp(s.startAng, 0, ease);
-          if (s.y >= s.ty){
-            s.y = s.ty;
-            if (Math.abs(s.vy) > 55 && s.bounces < 2){ s.vy = -s.vy * 0.25; s.bounces++; }
-            else { s.vy = 0; s.w = s.tw; s.h = s.th; s.ang = 0; s.phase = 'landed'; }
-          }
-          allLanded = false;
-        }
-        ctxX.save();
-        ctxX.globalAlpha = s.op;
-        ctxX.fillStyle = s.color;
-        ctxX.translate(s.x, s.y);
-        ctxX.rotate(s.ang);
-        ctxX.fillRect(-s.w / 2, -s.h / 2, s.w, s.h);
-        ctxX.restore();
-      }
-      for (var j = 0; j < lineNumbersArr.length; j++){
-        var n = lineNumbersArr[j];
-        if (elapsed < n.delay) continue;
-        ctxX.save();
-        ctxX.fillStyle = n.color;
-        ctxX.font = n.size + 'px "IBM Plex Mono", monospace';
-        ctxX.textAlign = 'right';
-        ctxX.textBaseline = 'middle';
-        ctxX.fillText(String(n.num), n.x, n.y);
-        ctxX.restore();
-      }
-      return allLanded;
-    }
-
-    // Typewriter-Schritt für ein Zitat-Paar (Urteil + Bild), unabhängig davon, ob es
-    // Hexagramm 1 oder 2 betrifft — ruft optional onDone() genau einmal auf, sobald
-    // fertig getippt ist.
-    function stepQuoteTypewriter(state){
-      if (!state.p1El) return;
-      var total1 = state.full1.length, total2 = state.full2.length;
-      var textProgress = clamp01(state.elapsed / TEXT_TYPE_DURATION);
-      var shownTotal = Math.floor(textProgress * (total1 + total2));
-      var shown1 = Math.min(shownTotal, total1);
-      var shown2 = Math.max(0, shownTotal - total1);
-      state.p1El.textContent = state.full1.slice(0, shown1);
-      state.p2El.textContent = state.full2.slice(0, shown2);
-      if (textProgress >= 1 && !state.revealed.done){
-        state.revealed.done = true;
-        state.citeEl.classList.add('show');
-        state.headingEl.classList.add('show');
-        state.explEl.classList.add('show');
-        if (state.onDone) state.onDone();
-      }
-    }
 
     var noteText = '';
 
@@ -2121,174 +2160,66 @@
     // Hexagramm, zentriert in der Antwort-Zone, mit Bezeichnung darüber. Bewusst
     // QUADRATISCH (Breite = Höhe der Linienfolge) und mit engerem Zeilenabstand
     // (Marcos Korrektur 04.09.2026) statt eines breiten, lang gezogenen Balkens.
-    function build(){
-      // Abstand zur oberen Bildschirmkante (05.09.2026, Marcos Feedback): frühere Versuche
-      // über padding-top auf .answer-zone hatten KEINE Wirkung, weil position:absolute-
-      // Kinder mit top:0 sich immer an der Padding-Kante des Containers orientieren, nicht
-      // an dessen Content-Kante — Padding wird bei dieser Positionierung schlicht ignoriert.
-      // Echter Fix: stageEl bekommt seinen top-Wert jetzt direkt hier gesetzt (überschreibt
-      // die CSS-Vorgabe top:0). quoteTextEl & alles danach hängt per .offsetTop-Kette daran
-      // (siehe unten) und rutscht automatisch mit — nur diese eine Stelle braucht den Offset.
-      // 38.2% (Goldener Schnitt) wirkte zu groß (05.09.2026, Marcos Korrektur) — zurück
-      // auf 15%.
-      var stageTopOffset = window.innerHeight * 0.15;
-      stageEl.style.top = stageTopOffset + 'px';
-
-      var rect = stageEl.getBoundingClientRect();
-      W = rect.width || 320;
-      H = rect.height || 220;
-
-      stalks = [];
-      lineNumbers = [];
-
-      // Bezeichnung jetzt zweizeilig (Marcos Vorgabe 04.09.2026): Zeile 1 = Nummer +
-      // chinesische/romanisierte Bezeichnung, Zeile 2 = deutsche Bezeichnung — der
-      // Schrägstrich aus der Rohdatenform ("Kiën / Das Schöpferische") entfällt dafür.
-      var nameParts = hex1.name.split(' / ');
-      var chineseName = nameParts[0] || hex1.name;
+    // Baut Bezeichnung + Hexagramm-Linien sofort vollständig auf (kein Fallen mehr) —
+    // wiederverwendet für Hexagramm 1 UND 2, per renderMiniHex() (dieselbe Funktion wie
+    // im Screen-3-Vorbild), nur größer gestellt (siehe .answer-hex-display in der CSS).
+    function renderHexBlock(labelEl, displayEl, hex, movingArr){
+      var nameParts = hex.name.split(' / ');
+      var chineseName = nameParts[0] || hex.name;
       var germanName = nameParts[1] || '';
-      // Kein Yijing-Unicode-Glyph mehr davor (07.09.2026, Marcos Fund) — der Zeichenblock
-      // U+4DC0ff. fehlt in vielen Android-Systemfonts und zeigte statt des Hexagramm-
-      // Symbols ein Ersatz-Icon.
-      label1.querySelector('.hexnum').innerHTML =
-        hex1.number + ' · ' + chineseName +
+      labelEl.querySelector('.hexnum').innerHTML =
+        hex.number + ' · ' + chineseName +
         (germanName ? '<span class="german-name">' + formatGermanName(germanName) + '</span>' : '');
-      var h1Height = label1.getBoundingClientRect().height || 16;
+      displayEl.innerHTML = renderMiniHex(hex.yang, movingArr);
+    }
 
-      // Hexagramm ein Drittel größer als im letzten Schritt (Marcos Korrektur 04.09.2026).
-      var pitch = Math.min(W * 0.346, H * 0.293);
-      function measure(p){
-        var lH = p * 0.2;       // schlanke Linien
-        var rowGap = p * 0.55;  // Abstand Linie-zu-Linie bleibt eng
-        var hSpan = 5 * rowGap + lH;
-        var bW = hSpan * 1.6;   // breiter als hoch statt quadratisch
-        var lGap = p * 0.62;
-        return { lineH: lH, rowGap: rowGap, hexSpan: hSpan, barW: bW, labelGap: lGap };
-      }
-      var m = measure(pitch);
+    // Setzt Urteil+Bild-Zitat direkt vollständig (kein Typewriter mehr).
+    function renderQuoteBlock(containerEl, origQuotes){
+      containerEl.innerHTML = '<p class="quote-heading">Die Bedeutung des Hexagramms:</p>' +
+        '<p class="quote-p" id="' + containerEl.id + 'P1"></p>' +
+        '<p class="quote-p" id="' + containerEl.id + 'P2"></p>';
+      document.getElementById(containerEl.id + 'P1').textContent = origQuotes ? ('„' + origQuotes.urteil + '"') : '';
+      document.getElementById(containerEl.id + 'P2').textContent = origQuotes ? ('„' + origQuotes.bild + '"') : '';
+    }
 
-      // Position: Goldener Schnitt INNERHALB des oberen Drittels von Screen 2 (nicht die
-      // Mitte der Zone) — das Hexagramm-Zentrum sitzt bei 38,2% der Zonenhöhe von oben.
-      // Fix (04.09.2026): Hexagramm-Größe zuerst unabhängig von der Bezeichnung fitten
-      // (großzügige Obergrenze), damit eine größere Bezeichnung es nicht mehr schrumpft.
-      var centerX = W / 2;
-      var guard = 0;
-      while ((m.hexSpan > H * 0.85 || m.barW > W * 0.96) && pitch > 4 && guard < 40){
-        pitch *= 0.92; m = measure(pitch); guard++;
-      }
-
-      // Block (Bezeichnung + Hexagramm) mittig in der oberen Zone zentrieren, statt am
-      // Goldenen-Schnitt-Punkt zu kleben (Marcos Korrektur 04.09.2026: soll "zentriert
-      // wirken", mit stimmigem Abstand nach oben UND zum Zitat darunter). Nur im seltenen
-      // Fall, dass der Block gar nicht in H passt, wird das Hexagramm als letzter Ausweg
-      // weiter geschrumpft.
-      var blockHeight = h1Height + m.labelGap + m.hexSpan;
-      while (blockHeight > H && pitch > 4 && guard < 80){
-        pitch *= 0.92; m = measure(pitch); guard++;
-        blockHeight = h1Height + m.labelGap + m.hexSpan;
-      }
-      var topOfBlock = Math.max(0, (H - blockHeight) / 2);
-      var centerY = topOfBlock + h1Height + m.labelGap + m.hexSpan / 2;
-
-      label1.style.left = centerX + 'px';
-      label1.style.top = (centerY - m.hexSpan / 2 - m.labelGap) + 'px';
-
-      layoutHexagram(hex1.yang, hex1.moving, centerY, m.rowGap, m.lineH, m.barW, centerX, 0, stalks, lineNumbers);
-
-      // Reine Original-Zitate (Urteil + Bild, ohne Überschrift, in Anführungsstriche)
-      // unter dem Hexagramm — bauen sich per Typewriter parallel zu den Linien auf und
-      // werden ungefähr gleichzeitig mit ihnen fertig (Marcos Wunsch 04.09.2026).
-      var origQuotes = ORAKEL_ORIGINAL_QUOTES[String(hex1.number)];
-      quoteFullText1 = origQuotes ? ('„' + origQuotes.urteil + '"') : '';
-      quoteFullText2 = origQuotes ? ('„' + origQuotes.bild + '"') : '';
-      quoteTextEl.innerHTML = '<p class="quote-heading">Die Bedeutung des Hexagramms:</p><p class="quote-p" id="quoteP1"></p><p class="quote-p" id="quoteP2"></p>';
-      quoteP1El = document.getElementById('quoteP1');
-      quoteP2El = document.getElementById('quoteP2');
-
-      // Zitat-Position dynamisch von der tatsächlichen Hexagramm-Unterkante ableiten,
-      // statt fest an der Drittel-Grenze zu kleben (Marcos Korrektur 04.09.2026: der
-      // Abstand zum Zitat soll zur wirklichen Position des zentrierten Blocks passen).
-      var hexBlockBottom = centerY + m.hexSpan / 2;
-      // + stageTopOffset: Brücke von stageEl-lokalen Koordinaten (centerY, hexBlockBottom)
-      // zu answer-zone-absoluten Koordinaten (quoteTextEl ist ein Geschwister von stageEl,
-      // kein Kind) — alles danach (sourceCite, hexExplanation, moving lines, Hexagramm 2...)
-      // hängt per .offsetTop-Kette daran und braucht deshalb KEINE eigene Korrektur.
-      quoteTextEl.style.top = (stageTopOffset + hexBlockBottom + 80) + 'px';
-
-      // Quellenangabe + eigene Erklärung direkt unter den Zitaten positionieren — dafür
-      // kurz den vollen Zitat-Text einsetzen, Höhe messen, dann wieder leeren (der
-      // Typewriter füllt ihn gleich neu), damit die Positionierung nicht von der noch
-      // leeren Zitat-Box ausgeht.
-      quoteP1El.textContent = quoteFullText1;
-      quoteP2El.textContent = quoteFullText2;
-      var quoteBottom = quoteTextEl.offsetTop + quoteTextEl.offsetHeight;
-      quoteP1El.textContent = '';
-      quoteP2El.textContent = '';
-
-      sourceCiteEl.style.top = (quoteBottom + 8) + 'px';
-      var citeBottom = sourceCiteEl.offsetTop + sourceCiteEl.offsetHeight;
-      hexExplanationHeadingEl.style.top = (citeBottom + 44) + 'px';
-      var explHeadingBottom = hexExplanationHeadingEl.offsetTop + hexExplanationHeadingEl.offsetHeight;
-      hexExplanationEl.style.top = (explHeadingBottom + 8) + 'px';
+    // Baut die komplette Antwort sofort und vollständig auf — keine Fall-Physik, kein
+    // Typewriter mehr (07.09.2026, Marcos Entscheidung nach wiederholten iPhone-Bugs:
+    // Überschneidungen und teils fehlende Texte kamen daher, dass ein resize mitten in
+    // der alten Zeitkette (elapsed/triggerTime) — auf iPhone durch die beim Scrollen ein-
+    // /ausblendende Safari-Adressleiste fast garantiert ausgelöst — den ganzen Aufbau neu
+    // startete, während schon weitergezählt wurde. Reiner Textfluss (siehe reading-col in
+    // der CSS) kennt dieses Problem nicht mehr: ein resize erzwingt hier höchstens ein
+    // normales Reflow, keinen Neuaufbau.
+    function renderReading(){
+      renderHexBlock(label1, answerHexDisplay1, hex1, hex1.moving);
+      renderQuoteBlock(quoteTextEl, ORAKEL_ORIGINAL_QUOTES[String(hex1.number)]);
 
       var explanationLang = HEXAGRAM_EXPLANATIONS[String(hex1.number)] || '';
       var explanationKurz = HEXAGRAM_EXPLANATIONS_KURZ[String(hex1.number)] || explanationLang;
       hexExplanationEl.innerHTML = explanationKurz ? renderKurzLang(explanationKurz, explanationLang) : '';
       hexExplanationEl.style.display = explanationKurz ? '' : 'none';
       hexExplanationEl.querySelectorAll('.expand-detail').forEach(function(d){
-        d.addEventListener('toggle', function(){ syncToggleLabel(d); positionTail(); });
+        d.addEventListener('toggle', function(){ syncToggleLabel(d); });
       });
 
-      // buildExplanationHTML()-Aufruf hier entfernt (07.09.2026, Performance-Fund gegen
-      // Marcos "App hängt öfters beim Laden" auf dem Handy) — das Ergebnis (noteText) wird
-      // nur von screen3Pile/openScreen3() gebraucht, und die werden aktuell nicht aufgerufen
-      // (bewusst pausiert, siehe openScreen3()-Kommentar unten). Bis dahin unnötige Arbeit
-      // bei jedem Wurf: mehrere ORAKEL_DATEN-Lookups + HTML-String-Aufbau, komplett ungenutzt.
-      // Sobald Screen 3 reaktiviert wird, hier wieder `noteText = buildExplanationHTML();`.
-
-      canvas.width = W * DPR; canvas.height = H * DPR;
-      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-
-      // Bug (04.09.2026, von Marco gefunden: "sehe nichts" trotz laut Debug-Marker
-      // korrekt durchgelaufener Zeitkette) — build() hängt auch am Resize-Listener
-      // (siehe beginBuilding), und jeder Aufruf setzte bisher explanationRevealed.done
-      // und den ganzen Übergangs-Status unbedingt zurück. Ein Resize MITTEN in der
-      // Animation (z. B. durch Browser-UI/Screenshot-Tools ausgelöst) riss dadurch den
-      // gerade laufenden Zeitplan aus onDone/setTimeout wieder ein, noch bevor er sichtbar
-      // wurde. Fix: den Übergangs-Status nur beim ERSTEN build() nach einem neuen Wurf
-      // zurücksetzen (isFirstBuild, von start() pro Wurf neu gesetzt) — ein Resize
-      // währenddessen positioniert nur neu, ohne die laufende Zeitkette zu killen.
-      if (isFirstBuild){
-        isFirstBuild = false;
-        explanationRevealed.done = false;
-        movingSectionShown = false;
-        stage2Started = false;
-        hex2Built = false;
-        triggerTime2 = null;
-        explanationRevealed2.done = false;
-        movingHeadingEl.classList.remove('show');
-        movingLinesBoxEl.classList.remove('show');
-        movingLinesBoxEl.open = false;
-        situationHeadingEl.classList.remove('show');
-        label2.classList.remove('show');
-        quoteTextEl2.classList.remove('show');
-        sourceCiteEl2.classList.remove('show');
-        hexExplanationHeadingEl2.classList.remove('show');
-        hexExplanationEl2.classList.remove('show');
-      }
+      // buildExplanationHTML()-Aufruf hier bewusst weggelassen (siehe 07.09.2026-Fund
+      // gegen Marcos "App hängt öfters") — das Ergebnis (noteText) wird nur von
+      // screen3Pile/openScreen3() gebraucht, die aktuell nicht aufgerufen werden (bewusst
+      // pausiert, siehe openScreen3()-Kommentar unten).
 
       if (movingCount > 0 && hex2){
-        stage2El.style.display = '';
+        answerHexBlock2.style.display = '';
         quoteTextEl2.style.display = '';
         sourceCiteEl2.style.display = '';
         hexExplanationHeadingEl2.style.display = '';
         movingHeadingEl.style.display = '';
         movingLinesBoxEl.style.display = '';
         situationHeadingEl.style.display = '';
+        movingLinesBoxEl.open = false;
 
-        // Ganzer Abschnitt jetzt EINE Aufklappbox (05.09.2026, Marcos Wunsch): pro Linie
-        // direkt hintereinander Original-Zitat, dann Kurztext + eigene (verschachtelte)
-        // Aufklappbox für die ausführliche Synthese — Quellenangabe einmal ganz am Ende.
+        // Ganzer Abschnitt eine Aufklappbox (05.09.2026, Marcos Wunsch): pro Linie direkt
+        // hintereinander Original-Zitat, dann Kurztext + eigene (verschachtelte)
+        // Aufklappbox für die ausführliche Synthese.
         var origData1 = ORAKEL_DATEN[String(hex1.number)];
         var lineExplData1 = LINE_EXPLANATIONS[String(hex1.number)];
         var movingBoxHTML = '';
@@ -2302,23 +2233,24 @@
           var synth = lineExplData1 && lineExplData1[lineNum];
           movingBoxHTML += renderKurzLang(lineData.kurz, synth);
         });
-        // Quellenangabe hier entfernt (05.09.2026, Marcos Wunsch) — steht schon einmal
-        // unter den Hexagramm-Zitaten oben, im Linienbereich nicht nochmal nötig.
         movingLinesBoxContentEl.innerHTML = movingBoxHTML;
-        // Sicherheitshalber alle frisch erzeugten Linien-Aufklappboxen explizit geschlossen
-        // starten (05.09.2026) — <details> ohne open-Attribut ist zwar per Spezifikation
-        // schon zu, das erzwingt es aber zusätzlich ausdrücklich.
         movingLinesBoxContentEl.querySelectorAll('.expand-detail').forEach(function(d){
           d.open = false;
-        });
-        // Verschachtelte Aufklappboxen (Linien-Synthesen) lösen ebenfalls eine Neu-
-        // positionierung des Folgetexts aus, sobald sie auf-/zugeklappt werden.
-        movingLinesBoxContentEl.querySelectorAll('.expand-detail').forEach(function(d){
-          d.addEventListener('toggle', function(){ syncToggleLabel(d); positionTail(); });
+          d.addEventListener('toggle', function(){ syncToggleLabel(d); });
         });
 
+        renderHexBlock(label2, answerHexDisplay2, hex2, null);
+        renderQuoteBlock(quoteTextEl2, ORAKEL_ORIGINAL_QUOTES[String(hex2.number)]);
+
+        var explanationLang2 = HEXAGRAM_EXPLANATIONS[String(hex2.number)] || '';
+        var explanationKurz2 = HEXAGRAM_EXPLANATIONS_KURZ[String(hex2.number)] || explanationLang2;
+        hexExplanationEl2.innerHTML = explanationKurz2 ? renderKurzLang(explanationKurz2, explanationLang2) : '';
+        hexExplanationEl2.style.display = explanationKurz2 ? '' : 'none';
+        hexExplanationEl2.querySelectorAll('.expand-detail').forEach(function(d){
+          d.addEventListener('toggle', function(){ syncToggleLabel(d); });
+        });
       } else {
-        stage2El.style.display = 'none';
+        answerHexBlock2.style.display = 'none';
         quoteTextEl2.style.display = 'none';
         sourceCiteEl2.style.display = 'none';
         hexExplanationHeadingEl2.style.display = 'none';
@@ -2327,143 +2259,51 @@
         movingLinesBoxEl.style.display = 'none';
         situationHeadingEl.style.display = 'none';
       }
-      positionTail();
-    }
 
-    // Positioniert alles, was hinter hexExplanationEl folgt, komplett neu — aufgerufen
-    // beim ersten Aufbau UND jedes Mal, wenn irgendeine Aufklappbox in diesem Bereich
-    // auf-/zugeklappt wird (05.09.2026, Marcos Fund: sonst überschneiden sich Folgetexte
-    // mit einer geöffneten ausführlichen Variante, weil Positionen sonst nur einmal in px
-    // berechnet würden). Baut NICHT Canvas/Stäbchen neu (kein Animations-Neustart) — beim
-    // allerersten Mal wird dafür einmalig buildStage2() aufgerufen, danach nur noch
-    // repositioniert.
-    function positionTail(){
-      if (!hex1) return;
-      var afterHex1Bottom = hexExplanationEl.offsetTop + hexExplanationEl.offsetHeight;
-      if (movingCount > 0 && hex2){
-        movingHeadingEl.style.top = (afterHex1Bottom + 80) + 'px';
-        var movingHeadingBottom = movingHeadingEl.offsetTop + movingHeadingEl.offsetHeight;
-        movingLinesBoxEl.style.top = (movingHeadingBottom + 28) + 'px';
-        var movingBoxBottom = movingLinesBoxEl.offsetTop + movingLinesBoxEl.offsetHeight;
-        situationHeadingEl.style.top = (movingBoxBottom + 80) + 'px';
-        var situationBottom = situationHeadingEl.offsetTop + situationHeadingEl.offsetHeight;
-        var stage2Top = situationBottom + 80;
-        if (!hex2Built){
-          hex2Built = true;
-          buildStage2(stage2Top);
-        } else {
-          stage2El.style.top = stage2Top + 'px';
-          quoteTextEl2.style.top = (stage2Top + hex2BlockBottom + 80) + 'px';
-          var quoteBottom2 = quoteTextEl2.offsetTop + quoteTextEl2.offsetHeight;
-          sourceCiteEl2.style.top = (quoteBottom2 + 8) + 'px';
-          var citeBottom2 = sourceCiteEl2.offsetTop + sourceCiteEl2.offsetHeight;
-          hexExplanationHeadingEl2.style.top = (citeBottom2 + 44) + 'px';
-          var explHeadingBottom2 = hexExplanationHeadingEl2.offsetTop + hexExplanationHeadingEl2.offsetHeight;
-          hexExplanationEl2.style.top = (explHeadingBottom2 + 8) + 'px';
-        }
-        afterHex1Bottom = hexExplanationEl2.offsetTop + hexExplanationEl2.offsetHeight;
-      }
-      // PDF/Teilen-Buttons direkt unter der letzten Erklärung (06.09.2026, Marcos
-      // Korrektur — vorher im Footer, das saß zu weit weg von der eigentlichen Lesung).
-      readingActionsEl.style.top = (afterHex1Bottom + 60) + 'px';
-      var actionsBottom = readingActionsEl.offsetTop + readingActionsEl.offsetHeight;
-
-      // Marken-/Rechts-Footer immer ganz am Ende, egal ob mit oder ohne zweites Hexagramm
-      // (05.09.2026) — reagiert wie alles hier auch auf ein Auf-/Zuklappen von Impressum
-      // oder App installieren, ohne dass danach noch etwas folgen müsste.
-      oracleFooterEl.style.top = (actionsBottom + 60) + 'px';
-      var footerBottom = oracleFooterEl.offsetTop + oracleFooterEl.offsetHeight;
-      // Die Antwort-Zone besteht nur aus absolut positionierten Kindern, wächst also
-      // NICHT von selbst mit dem Inhalt mit — deshalb hier die tatsächlich erreichte
-      // Unterkante messen und als Mindesthöhe setzen.
-      answerZone.style.minHeight = Math.max(window.innerHeight, footerBottom + 80) + 'px';
-    }
-
-    // Baut das zweite (Wandlungs-)Hexagramm mit derselben Bau-Logik wie build() für
-    // Hexagramm 1 — eigener Canvas/Label, aber gleiche Größenformel und gleiche
-    // Zitat/Erklärung-Struktur darunter. topOffset ist die absolute Position (px)
-    // innerhalb der Antwort-Zone, ab der dieser Block beginnt.
-    function buildStage2(topOffset){
-      stage2El.style.top = topOffset + 'px';
-      var rect2 = stage2El.getBoundingClientRect();
-      W2 = rect2.width || W;
-      H2 = rect2.height || H;
-
-      stalks2 = [];
-      lineNumbers2 = [];
-
-      var nameParts2 = hex2.name.split(' / ');
-      var chineseName2 = nameParts2[0] || hex2.name;
-      var germanName2 = nameParts2[1] || '';
-      label2.querySelector('.hexnum').innerHTML =
-        hex2.number + ' · ' + chineseName2 +
-        (germanName2 ? '<span class="german-name">' + formatGermanName(germanName2) + '</span>' : '');
-      var h2Height = label2.getBoundingClientRect().height || 16;
-
-      var pitch2 = Math.min(W2 * 0.346, H2 * 0.293);
-      function measure2(p){
-        var lH = p * 0.2, rowGap = p * 0.55, hSpan = 5 * rowGap + lH, bW = hSpan * 1.6, lGap = p * 0.62;
-        return { lineH: lH, rowGap: rowGap, hexSpan: hSpan, barW: bW, labelGap: lGap };
-      }
-      var m2 = measure2(pitch2);
-      var centerX2 = W2 / 2;
-      var guard2 = 0;
-      while ((m2.hexSpan > H2 * 0.85 || m2.barW > W2 * 0.96) && pitch2 > 4 && guard2 < 40){
-        pitch2 *= 0.92; m2 = measure2(pitch2); guard2++;
-      }
-      var blockHeight2 = h2Height + m2.labelGap + m2.hexSpan;
-      while (blockHeight2 > H2 && pitch2 > 4 && guard2 < 80){
-        pitch2 *= 0.92; m2 = measure2(pitch2); guard2++;
-        blockHeight2 = h2Height + m2.labelGap + m2.hexSpan;
-      }
-      var topOfBlock2 = Math.max(0, (H2 - blockHeight2) / 2);
-      var centerY2 = topOfBlock2 + h2Height + m2.labelGap + m2.hexSpan / 2;
-
-      label2.style.left = centerX2 + 'px';
-      label2.style.top = (centerY2 - m2.hexSpan / 2 - m2.labelGap) + 'px';
-
-      layoutHexagram(hex2.yang, null, centerY2, m2.rowGap, m2.lineH, m2.barW, centerX2, 0, stalks2, lineNumbers2);
-
-      var origQuotes2 = ORAKEL_ORIGINAL_QUOTES[String(hex2.number)];
-      quoteFullText1b = origQuotes2 ? ('„' + origQuotes2.urteil + '"') : '';
-      quoteFullText2b = origQuotes2 ? ('„' + origQuotes2.bild + '"') : '';
-      quoteTextEl2.innerHTML = '<p class="quote-heading">Die Bedeutung des Hexagramms:</p><p class="quote-p" id="quoteP1b"></p><p class="quote-p" id="quoteP2b"></p>';
-      quoteP1ElB = document.getElementById('quoteP1b');
-      quoteP2ElB = document.getElementById('quoteP2b');
-
-      // In äußerer Variable gemerkt (05.09.2026) — positionTail() braucht sie später für
-      // reines Repositionieren, ohne diesen ganzen Aufbau (inkl. Stäbchen-Animation) erneut
-      // anzustoßen.
-      hex2BlockBottom = centerY2 + m2.hexSpan / 2;
-      quoteTextEl2.style.top = (topOffset + hex2BlockBottom + 80) + 'px';
-
-      quoteP1ElB.textContent = quoteFullText1b;
-      quoteP2ElB.textContent = quoteFullText2b;
-      var quoteBottom2 = quoteTextEl2.offsetTop + quoteTextEl2.offsetHeight;
-      quoteP1ElB.textContent = '';
-      quoteP2ElB.textContent = '';
-
-      sourceCiteEl2.style.top = (quoteBottom2 + 8) + 'px';
-      var citeBottom2 = sourceCiteEl2.offsetTop + sourceCiteEl2.offsetHeight;
-      hexExplanationHeadingEl2.style.top = (citeBottom2 + 44) + 'px';
-      var explHeadingBottom2 = hexExplanationHeadingEl2.offsetTop + hexExplanationHeadingEl2.offsetHeight;
-      hexExplanationEl2.style.top = (explHeadingBottom2 + 8) + 'px';
-
-      var explanationLang2 = HEXAGRAM_EXPLANATIONS[String(hex2.number)] || '';
-      var explanationKurz2 = HEXAGRAM_EXPLANATIONS_KURZ[String(hex2.number)] || explanationLang2;
-      hexExplanationEl2.innerHTML = explanationKurz2 ? renderKurzLang(explanationKurz2, explanationLang2) : '';
-      hexExplanationEl2.style.display = explanationKurz2 ? '' : 'none';
-      hexExplanationEl2.querySelectorAll('.expand-detail').forEach(function(d){
-        d.addEventListener('toggle', function(){ syncToggleLabel(d); positionTail(); });
+      // Tagebuch-Eintrag speichern (07.09.2026) — Snapshot der gerade gebauten Zitate/
+      // Erklärungen, nach den if/else-Zweigen oben, damit hex2-Felder (falls vorhanden)
+      // schon final gefüllt sind.
+      saveDiaryEntry({
+        date: new Date().toISOString(),
+        question: questionInputEl3.value.trim(),
+        hex1: { number: hex1.number, name: hex1.name },
+        hex2: (movingCount > 0 && hex2) ? { number: hex2.number, name: hex2.name } : null,
+        quoteHTML1: quoteTextEl.innerHTML,
+        explanationHTML1: hexExplanationEl.innerHTML,
+        movingHTML: (movingCount > 0 && hex2) ? movingLinesBoxContentEl.innerHTML : null,
+        quoteHTML2: (movingCount > 0 && hex2) ? quoteTextEl2.innerHTML : null,
+        explanationHTML2: (movingCount > 0 && hex2) ? hexExplanationEl2.innerHTML : null
       });
 
-      canvas2.width = W2 * DPR; canvas2.height = H2 * DPR;
-      ctx2.setTransform(DPR, 0, 0, DPR, 0, 0);
+      // Alles zusammen einblenden, nach einem doppelten rAF (garantiert einen
+      // abgeschlossenen Repaint des unsichtbaren Ausgangszustands, bevor die
+      // Opacity-Transition beginnt — gleiches Muster wie beim Grid-Aufbau oben).
+      requestAnimationFrame(function(){
+        requestAnimationFrame(function(){
+          label1.classList.add('show');
+          quoteTextEl.classList.add('show');
+          sourceCiteEl.classList.add('show');
+          hexExplanationHeadingEl.classList.add('show');
+          hexExplanationEl.classList.add('show');
+          if (movingCount > 0 && hex2){
+            movingHeadingEl.classList.add('show');
+            movingLinesBoxEl.classList.add('show');
+            situationHeadingEl.classList.add('show');
+            label2.classList.add('show');
+            quoteTextEl2.classList.add('show');
+            sourceCiteEl2.classList.add('show');
+            hexExplanationHeadingEl2.classList.add('show');
+            hexExplanationEl2.classList.add('show');
+          }
+          readingActionsEl.classList.add('show');
+          oracleFooterEl.classList.add('show');
+        });
+      });
     }
 
-    // Beide Hexagramme bleiben für immer stehen. Sobald sie komplett sind, öffnet sich
-    // automatisch Screen 3 — dort fallen die Streu-Stäbchen und lassen sich zum Rahmen
-    // einer Box wischen (siehe screen3Pile weiter unten).
+    // Beide Hexagramme bleiben für immer stehen. openScreen3() bleibt wie vor dem
+    // 07.09.2026-Umbau definiert, aber weiterhin bewusst nicht aufgerufen (Screen 3 ist
+    // pausiert, s. Kommentar dort in der Vorgeschichte) — unverändert übernommen.
     function openScreen3(){
       if (screen3Started) return;
       screen3Started = true;
@@ -2482,79 +2322,6 @@
         softScrollTo(targetY, scrollDuration);
         setTimeout(reveal, scrollDuration);
       }
-    }
-
-    function draw(ts){
-      if (lastTs === null) lastTs = ts;
-      var dt = Math.min(0.05, (ts - lastTs) / 1000);
-      lastTs = ts;
-
-      if (started && W && triggerTime !== null){
-        ctx.clearRect(0, 0, W, H);
-        var elapsed = performance.now() - triggerTime;
-
-        // Typewriter: Zeichen für Zeichen, Urteil-Zitat zuerst, dann Bild-Zitat —
-        // Zieldauer ~gleich lang wie der Hexagramm-Aufbau, damit beides etwa
-        // gleichzeitig fertig wird. Sobald fertig, folgt (bei wandelnden Linien) nach
-        // kurzer Pause der neue Abschnitt, danach das zweite Hexagramm (Marcos Vorgabe
-        // 04.09.2026) — vorerst per Zeitverzögerung verkettet, keine feste Scroll-Grenze.
-        stepQuoteTypewriter({
-          p1El: quoteP1El, p2El: quoteP2El, full1: quoteFullText1, full2: quoteFullText2,
-          elapsed: elapsed, citeEl: sourceCiteEl, headingEl: hexExplanationHeadingEl,
-          explEl: hexExplanationEl, revealed: explanationRevealed,
-          onDone: function(){
-            if (movingCount > 0 && !movingSectionShown){
-              movingSectionShown = true;
-              setTimeout(function(){
-                movingHeadingEl.classList.add('show');
-                movingLinesBoxEl.classList.add('show');
-                situationHeadingEl.classList.add('show');
-                setTimeout(function(){
-                  if (!stage2Started){
-                    stage2Started = true;
-                    label2.classList.add('show');
-                    quoteTextEl2.classList.add('show');
-                    triggerTime2 = performance.now();
-                  }
-                }, 1600);
-              }, 600);
-            } else if (movingCount === 0){
-              // Ohne wandelnde Linien ist Hexagramm 1 die einzige/letzte Erklärung —
-              // Footer erscheint direkt danach.
-              revealFooter();
-            }
-          }
-        });
-
-        // Eckig statt abgerundet (Marcos Korrektur 04.09.2026) — reines Rechteck statt roundRect.
-        stepStalks(ctx, stalks, lineNumbers, elapsed, dt);
-
-        // Kein Weiterscrollen zu Screen 3 (Marcos Vorgabe 04.09.2026) — bleibt vorerst
-        // auf Screen 1 stehen, sobald das Hexagramm fertig aufgebaut ist. openScreen3()
-        // bleibt unten definiert für später ("ich sage dir, wann").
-        // if (allLanded) openScreen3();
-      }
-
-      // Zweites Hexagramm läuft völlig unabhängig vom ersten, sobald triggerTime2 gesetzt
-      // ist (siehe onDone oben) — gleiche Bau- und Zitat-Logik, eigener Canvas.
-      if (triggerTime2 !== null && W2){
-        ctx2.clearRect(0, 0, W2, H2);
-        var elapsed2 = performance.now() - triggerTime2;
-        stepQuoteTypewriter({
-          p1El: quoteP1ElB, p2El: quoteP2ElB, full1: quoteFullText1b, full2: quoteFullText2b,
-          elapsed: elapsed2, citeEl: sourceCiteEl2, headingEl: hexExplanationHeadingEl2,
-          explEl: hexExplanationEl2, revealed: explanationRevealed2,
-          onDone: revealFooter
-        });
-        stepStalks(ctx2, stalks2, lineNumbers2, elapsed2, dt);
-      }
-
-      // Schleife anhalten, sobald wirklich alles fertig ist (07.09.2026, Performance-Fund
-      // gegen Marcos "App hängt öfters" auf dem Handy) — bis jetzt lief requestAnimationFrame
-      // für immer weiter und zeichnete beide Canvases 60x/Sekunde neu, obwohl seit Erscheinen
-      // des Footers optisch nichts mehr passiert. Das kostet auf Dauer spürbar Akku/CPU und
-      // kann auf schwächeren Handys zu genau der Trägheit führen, die er beschreibt.
-      if (!footerShown) requestAnimationFrame(draw);
     }
 
     // Kastung jetzt von start() abgetrennt (05.09.2026): der Grid-Screen muss VOR dem
@@ -2603,30 +2370,43 @@
 
       gridScreenEl.classList.add('casting');
 
-      function beginBuilding(){
+      function reveal(){
         answerZone.classList.add('show');
-        build();
-        window.addEventListener('resize', build);
-        triggerTime = performance.now();
-        requestAnimationFrame(function(){
-          label1.classList.add('show');
-          quoteTextEl.classList.add('show');
-        });
+        renderReading();
       }
 
       // "langsamer Scroll" (Marcos Wunsch) — deutlich länger als die sonst 2200ms.
       if (reducedMotion){
         answerZone.scrollIntoView({ behavior: 'auto', block: 'start' });
-        beginBuilding();
+        reveal();
       } else {
         var targetY = window.pageYOffset + window.innerHeight;
         var scrollDuration = 3200;
         softScrollTo(targetY, scrollDuration);
-        setTimeout(beginBuilding, scrollDuration);
+        setTimeout(reveal, scrollDuration);
       }
     }
 
-    requestAnimationFrame(draw);
+    // "Neue Frage stellen" (07.09.2026, Marcos Wunsch: mehrere Fragen ohne Reload) —
+    // setzt nur den Reading-Zustand zurück (neuer Wurf beim nächsten start()); das Grid
+    // selbst setzt gridScreenApi.reset() zurück.
+    function resetReading(){
+      started = false;
+      castPrepared = false;
+      hex1 = hex2 = undefined;
+      movingCount = 0;
+      answerZone.classList.remove('show');
+    }
+    newQuestionBtnEl.addEventListener('click', function(){
+      resetReading();
+      gridScreenApi.reset();
+      softScrollTo(0, 1400);
+      setTimeout(function(){
+        var qi = document.getElementById('questionInput');
+        if (qi) qi.focus();
+      }, 1450);
+    });
+
     return { start: start, prepareCast: prepareCast };
   })();
 
