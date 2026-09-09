@@ -2248,24 +2248,36 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       }
       var lang1 = HEXAGRAM_EXPLANATIONS[String(hex1.number)] || HEXAGRAM_EXPLANATIONS_KURZ[String(hex1.number)] || '';
       if (lang1) parts.push('\n' + lang1);
+
+      // Pflicht-Vorgabe (09.09.2026, Marcos ausdrücklicher Wunsch): die ausführliche
+      // Beschreibung ALLER sechs Linien (nicht nur der wandelnden) geht immer mit raus,
+      // unabhängig davon, ob der Nutzer irgendeine "Ausführlicher lesen"-Aufklappbox in
+      // der App geöffnet hat. Gilt für hex1 immer, für hex2 zusätzlich bei Wandlung.
+      appendAllLines(hex1);
       if (movingCount > 0 && hex2){
-        var origData1 = ORAKEL_DATEN[String(hex1.number)];
-        var lineExplData1 = LINE_EXPLANATIONS[String(hex1.number)];
-        hex1.moving.forEach(function(isMoving, i){
-          if (!isMoving || !origData1) return;
-          var lineNum = String(i + 1);
-          var lineData = origData1.linien[lineNum];
-          if (!lineData) return;
-          var synth = (lineExplData1 && lineExplData1[lineNum]) || lineData.kurz;
-          parts.push('\n' + LINE_LABELS[i] + ' — „' + lineData.original + '": ' + synth);
-        });
         var oq2 = ORAKEL_ORIGINAL_QUOTES[String(hex2.number)];
         if (oq2) parts.push('\nWohin es sich wandelt — Urteil: „' + oq2.urteil + '"');
         var lang2 = HEXAGRAM_EXPLANATIONS[String(hex2.number)] || HEXAGRAM_EXPLANATIONS_KURZ[String(hex2.number)] || '';
         if (lang2) parts.push('Wohin es sich wandelt (Hexagramm ' + hex2.number + '): ' + lang2);
+        appendAllLines(hex2);
       }
       parts.push('\n---\nBitte deute mir dieses I-Ging-Ergebnis in verständlicher, moderner Alltagssprache, bezogen auf meine Frage.');
       return parts.join('\n');
+
+      function appendAllLines(hex){
+        var origData = ORAKEL_DATEN[String(hex.number)];
+        var lineExplData = LINE_EXPLANATIONS[String(hex.number)];
+        if (!origData) return;
+        parts.push('\nDie sechs Linien von Hexagramm ' + hex.number + ' (rot/„wandelnd" = veränderlich):');
+        for (var i = 0; i < 6; i++){
+          var lineNum = String(i + 1);
+          var lineData = origData.linien[lineNum];
+          if (!lineData) continue;
+          var isMoving = hex.moving && hex.moving[i];
+          var synth = (lineExplData && lineExplData[lineNum]) || lineData.kurz;
+          parts.push('\n' + LINE_LABELS[i] + (isMoving ? ' (wandelnd)' : '') + ' — „' + lineData.original + '": ' + synth);
+        }
+      }
     }
 
     // window.print() UND das Öffnen eines eigenständigen Blob-Dokuments in neuem Tab bleiben
@@ -2364,19 +2376,13 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       var lang1 = HEXAGRAM_EXPLANATIONS[String(hex1.number)] || HEXAGRAM_EXPLANATIONS_KURZ[String(hex1.number)] || '';
       if (lang1){ heading('Was dir das Zeichen sagt:'); paragraph(lang1); }
 
+      // Pflicht-Vorgabe (09.09.2026, Marcos ausdrücklicher Wunsch): die ausführliche
+      // Beschreibung ALLER sechs Linien (nicht nur der wandelnden) landet immer im PDF,
+      // unabhängig von jeder Aufklappbox in der App-Ansicht. Gilt für hex1 immer, für
+      // hex2 zusätzlich bei Wandlung.
+      allLinesSection(hex1);
+
       if (movingCount > 0 && hex2){
-        heading('Rote Linien bedeuten Veränderung.');
-        var origData1 = ORAKEL_DATEN[String(hex1.number)];
-        var lineExplData1 = LINE_EXPLANATIONS[String(hex1.number)];
-        hex1.moving.forEach(function(isMoving, i){
-          if (!isMoving || !origData1) return;
-          var lineNum = String(i + 1);
-          var lineData = origData1.linien[lineNum];
-          if (!lineData) return;
-          var synth = (lineExplData1 && lineExplData1[lineNum]) || lineData.kurz;
-          paragraph(LINE_LABELS[i] + ': „' + lineData.original + '"', { style: 'bold' });
-          paragraph(synth);
-        });
         heading('Daraus ergibt sich folgende Situation:');
         hexBlock(hex2.number, hex2.name, hex2.yang, null);
         var oq2 = ORAKEL_ORIGINAL_QUOTES[String(hex2.number)];
@@ -2387,10 +2393,28 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         paragraph('— I Ging, „Das Buch der Wandlungen" nach Wilhelm', { style: 'italic', size: 9, align: 'right', color: [107, 98, 92] });
         var lang2 = HEXAGRAM_EXPLANATIONS[String(hex2.number)] || HEXAGRAM_EXPLANATIONS_KURZ[String(hex2.number)] || '';
         if (lang2){ heading('Was dir das Zeichen sagt:'); paragraph(lang2); }
+        allLinesSection(hex2);
       }
 
       paragraph('Nova|LI · Das 49-Bit-Prinzip. Ein Projekt von Nova|LI.', { size: 9, color: [107, 98, 92] });
       return doc.output('blob');
+
+      function allLinesSection(hex){
+        var origData = ORAKEL_DATEN[String(hex.number)];
+        var lineExplData = LINE_EXPLANATIONS[String(hex.number)];
+        if (!origData) return;
+        heading('Die sechs Linien von Hexagramm ' + hex.number + ' (rot = wandelnd):');
+        for (var i = 0; i < 6; i++){
+          var lineNum = String(i + 1);
+          var lineData = origData.linien[lineNum];
+          if (!lineData) continue;
+          var isMoving = hex.moving && hex.moving[i];
+          var synth = (lineExplData && lineExplData[lineNum]) || lineData.kurz;
+          paragraph(LINE_LABELS[i] + (isMoving ? ' — wandelnd' : '') + ': „' + lineData.original + '"',
+            { style: 'bold', color: isMoving ? [194, 59, 31] : undefined });
+          paragraph(synth);
+        }
+      }
     }
 
     async function savePdf(){
