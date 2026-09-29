@@ -2878,14 +2878,27 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       }
 
       // "langsamer Scroll" (Marcos Wunsch) — deutlich länger als die sonst 2200ms.
+      // Fix 29.09.2026 (Marco, Smartphone): Ziel ist IMMER das erste gezogene Hexagramm
+      // (answerHexBlock1), nicht pauschal eine Bildschirmhöhe tiefer — sonst landet man
+      // auf dem Handy beim ersten Text und das Hexagramm liegt schon oberhalb.
+      var hexBlock1 = document.getElementById('answerHexBlock1');
+      function hexTargetY(){
+        var top = hexBlock1.getBoundingClientRect().top + window.pageYOffset;
+        return Math.max(0, top - Math.round(window.innerHeight * 0.06));
+      }
       if (reducedMotion){
-        answerZone.scrollIntoView({ behavior: 'auto', block: 'start' });
+        window.scrollTo(0, hexTargetY());
         reveal();
       } else {
-        var targetY = window.pageYOffset + window.innerHeight;
         var scrollDuration = 3200;
-        softScrollTo(targetY, scrollDuration);
-        setTimeout(reveal, scrollDuration);
+        softScrollTo(hexTargetY(), scrollDuration);
+        setTimeout(function(){
+          reveal();
+          // Nachkorrektur: Adressleiste/Layout kann sich auf dem Handy während des Scrolls
+          // verschieben — dann sanft auf das Hexagramm nachziehen.
+          var t = hexTargetY();
+          if (Math.abs(window.pageYOffset - t) > 40) softScrollTo(t, 600);
+        }, scrollDuration);
       }
     }
 
