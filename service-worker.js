@@ -1,40 +1,13 @@
-const CACHE_NAME = 'intuitions-kompass-v2';
-const APP_SHELL = [
-  './',
-  './index.html',
-  './manifest.json',
-  './icons/icon-192.png',
-  './icons/icon-512.png',
-  './icons/icon-512-maskable.png',
-  './icons/apple-touch-icon.png',
-  './icons/favicon-32.png'
-];
-
-self.addEventListener('install', (event) => {
+// 29.09.2026: Die alte Fassung ("Intuitions-Kompass") ist abgeschaltet.
+// Dieser Service Worker löscht seinen alten Zwischenspeicher, meldet sich ab
+// und lädt offene Fenster neu, damit alle nur noch die neue Seite sehen.
+self.addEventListener('install', function(){ self.skipWaiting(); });
+self.addEventListener('activate', function(event){
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
-  );
-  self.skipWaiting();
-});
-
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))
-    )
-  );
-  self.clients.claim();
-});
-
-self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
-  event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        const copy = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
-        return response;
-      })
-      .catch(() => caches.match(event.request))
+    caches.keys()
+      .then(function(keys){ return Promise.all(keys.map(function(k){ return caches.delete(k); })); })
+      .then(function(){ return self.registration.unregister(); })
+      .then(function(){ return self.clients.matchAll({ type: 'window' }); })
+      .then(function(clients){ clients.forEach(function(c){ c.navigate(c.url); }); })
   );
 });
